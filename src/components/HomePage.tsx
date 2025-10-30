@@ -1,16 +1,18 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth'
 import { useKV } from '@github/spark/hooks'
-import { ScheduleData } from '@/lib/types'
-import { SignIn, UserPlus, Upload, CalendarBlank, ListBullets, ChartBar, Users, WarningCircle, CheckCircle, Sparkle } from '@phosphor-icons/react'
+import { ScheduleData, Absence } from '@/lib/types'
+import { SignIn, UserPlus, Upload, CalendarBlank, ListBullets, ChartBar, Users, WarningCircle, CheckCircle, Sparkle, Trash, UserCircleMinus } from '@phosphor-icons/react'
 
 interface LoginDialogProps {
   open: boolean
@@ -163,11 +165,45 @@ interface HomePageProps {
 export function HomePage({ onNavigate }: HomePageProps) {
   const [loginOpen, setLoginOpen] = useState(false)
   const [addUserOpen, setAddUserOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [absenceToDelete, setAbsenceToDelete] = useState<string | null>(null)
   const { currentUser, logout } = useAuth()
   const [schedules] = useKV<ScheduleData[]>('schedules', [])
+  const [absences, setAbsences] = useKV<Absence[]>('absences', [])
 
   const hasApprovedSchedule = schedules && Array.isArray(schedules) && schedules.some(s => s.approved)
   const hasUnapprovedSchedule = schedules && Array.isArray(schedules) && schedules.length > 0 && !hasApprovedSchedule
+
+  const allTeachers = useMemo(() => {
+    if (!schedules || !Array.isArray(schedules) || schedules.length === 0) return []
+    const approvedSchedules = schedules.filter((s) => s.approved)
+    return approvedSchedules.flatMap((schedule) => schedule.teachers || [])
+  }, [schedules])
+
+  const recentAbsences = useMemo(() => {
+    if (!absences || !Array.isArray(absences)) return []
+    return absences
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5)
+  }, [absences])
+
+  const getTeacherName = (teacherId: string): string => {
+    return allTeachers.find((t) => t.id === teacherId)?.name || 'غير معروف'
+  }
+
+  const handleDeleteAbsence = (absenceId: string) => {
+    setAbsenceToDelete(absenceId)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteAbsence = () => {
+    if (absenceToDelete) {
+      setAbsences((current) => (current || []).filter(a => a.id !== absenceToDelete))
+      toast.success('🗑️ تم حذف الغياب بنجاح')
+      setDeleteDialogOpen(false)
+      setAbsenceToDelete(null)
+    }
+  }
 
   const menuItems = [
     {
@@ -326,10 +362,102 @@ export function HomePage({ onNavigate }: HomePageProps) {
             </AlertDescription>
           </Alert>
         )}
+
+        {currentUser && recentAbsences.length > 0 && (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCircleMinus className="w-5 h-5" />
+                الغيابات الأخيرة
+                <Badge variant="secondary" className="mr-auto">
+                  {recentAbsences.length}
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                آخر {recentAbsences.length} غيابات مسجلة في النظام
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {recentAbsences.map((absence) => (
+                  <div
+                    key={absence.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/5 transition-colors"
+                  >
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-3">
+                        <p className="font-medium text-lg">{getTeacherName(absence.teacherId)}</p>
+                        <Badge variant="destructive" className="text-xs">غائب</Badge>
+                      </div>
+                      
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <CalendarBlank className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-muted-foreground">{absence.date}</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">الحصص:</span>
+                          <div className="flex gap-1">
+                            {absence.periods.map((p) => (
+                              <Badge key={p} variant="outline" className="text-xs">
+                                {p}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {absence.substituteTeacherId ? (
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-muted-foreground">البديل:</span>
+                          <span className="font-medium text-accent">
+                            {getTeacherName(absence.substituteTeacherId)}
+                          </span>
+                        </div>
+                      ) : (
+                        <Badge variant="outline" className="text-xs w-fit">
+                          بدون بديل
+                        </Badge>
+                      )}
+                    </div>
+
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteAbsence(absence.id)}
+                      className="gap-2 shrink-0"
+                    >
+                      <Trash className="w-4 h-4" />
+                      حذف الغياب
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
       <AddUserDialog open={addUserOpen} onOpenChange={setAddUserOpen} />
+      
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>⚠️ هل تريد حذف هذا الغياب نهائيًا من السجل؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              هذا الإجراء لا يمكن التراجع عنه. سيتم حذف سجل الغياب بشكل دائم من قاعدة البيانات.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteAbsence} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              تأكيد الحذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
