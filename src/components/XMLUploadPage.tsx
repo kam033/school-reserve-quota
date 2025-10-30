@@ -9,6 +9,7 @@ import { CloudArrowUp, WarningCircle, CheckCircle, BookOpen } from '@phosphor-ic
 import { parseXMLFile } from '@/lib/xmlParser'
 import { ScheduleData } from '@/lib/types'
 import { XMLGuide } from '@/components/XMLGuide'
+import { TeacherDataTable } from '@/components/TeacherDataTable'
 
 export function XMLUploadPage() {
   const [schedules, setSchedules] = useKV<ScheduleData[]>('schedules', [])
@@ -17,6 +18,7 @@ export function XMLUploadPage() {
     errors: string[]
     warnings: string[]
   } | null>(null)
+  const [lastUploadedSchedule, setLastUploadedSchedule] = useState<ScheduleData | null>(null)
 
   const normalizeToUTF8 = async (file: File): Promise<string> => {
     const arrayBuffer = await file.arrayBuffer()
@@ -81,11 +83,13 @@ export function XMLUploadPage() {
 
       if (result.success && result.data) {
         setSchedules((current) => [...(current || []), result.data!])
+        setLastUploadedSchedule(result.data)
         toast.success(
           `✅ تم تحويل الملف ورفعه بنجاح! تم استخراج ${result.data.teachers.length} معلم و ${result.data.schedules?.length || 0} حصة`
         )
       } else {
         toast.error('❌ فشل رفع الملف. يرجى مراجعة الأخطاء')
+        setLastUploadedSchedule(null)
       }
       
       setUploading(false)
@@ -221,6 +225,12 @@ export function XMLUploadPage() {
                       </AlertDescription>
                     </Alert>
                   )}
+                </div>
+              )}
+
+              {lastUploadedSchedule && (
+                <div className="space-y-6">
+                  <TeacherDataTable scheduleData={lastUploadedSchedule} />
                 </div>
               )}
 

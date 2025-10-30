@@ -232,6 +232,44 @@ export function parseXMLFile(xmlContent: string, schoolId: string): ParseResult 
       })
     })
 
+    const teacherSubjectMap = new Map<string, Set<string>>()
+    const teacherScheduleCount = new Map<string, number>()
+
+    schedules.forEach((schedule) => {
+      const teacherId = schedule.teacherID
+      
+      if (!teacherScheduleCount.has(teacherId)) {
+        teacherScheduleCount.set(teacherId, 0)
+      }
+      teacherScheduleCount.set(teacherId, teacherScheduleCount.get(teacherId)! + 1)
+
+      if (schedule.subjectGradeID) {
+        if (!teacherSubjectMap.has(teacherId)) {
+          teacherSubjectMap.set(teacherId, new Set())
+        }
+        teacherSubjectMap.get(teacherId)!.add(schedule.subjectGradeID)
+      }
+    })
+
+    teachers.forEach((teacher) => {
+      const originalId = teacher.originalId || teacher.id
+      const subjectIds = teacherSubjectMap.get(originalId)
+      
+      if (subjectIds && subjectIds.size > 0) {
+        const subjectNames: string[] = []
+        subjectIds.forEach((subjectId) => {
+          const subject = subjects.find((s) => s.originalId === subjectId)
+          if (subject) {
+            subjectNames.push(subject.name)
+          }
+        })
+        
+        if (subjectNames.length > 0) {
+          teacher.subject = subjectNames.join(' / ')
+        }
+      }
+    })
+
     if (teachers.length === 0) {
       errors.push('لم يتم العثور على أي معلمين في الملف. تأكد من وجود قسم <teachers> بالملف.')
     }
