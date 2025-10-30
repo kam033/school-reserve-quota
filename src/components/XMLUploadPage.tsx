@@ -18,45 +18,47 @@ export function XMLUploadPage() {
     warnings: string[]
   } | null>(null)
 
+  const normalizeToUTF8 = async (file: File): Promise<string> => {
+    const text = await file.text()
+    const utf8Blob = new Blob([text], {
+      type: 'text/xml;charset=utf-8',
+    })
+    const normalizedFile = new File([utf8Blob], file.name, {
+      type: 'text/xml;charset=utf-8',
+    })
+    return await normalizedFile.text()
+  }
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
     setUploading(true)
     setParseResult(null)
+    toast.info('⏳ جارٍ فحص الملف وتحويله إلى UTF-8 بدون BOM ...')
 
     try {
-      const reader = new FileReader()
-      reader.onload = async (event) => {
-        const content = event.target?.result as string
-        const schoolId = `school-${Date.now()}`
-        const result = parseXMLFile(content, schoolId)
+      const content = await normalizeToUTF8(file)
+      const schoolId = `school-${Date.now()}`
+      const result = parseXMLFile(content, schoolId)
 
-        setParseResult({
-          errors: result.errors,
-          warnings: result.warnings,
-        })
+      setParseResult({
+        errors: result.errors,
+        warnings: result.warnings,
+      })
 
-        if (result.success && result.data) {
-          setSchedules((current) => [...(current || []), result.data!])
-          toast.success(
-            `تم رفع الجدول بنجاح! تم استخراج ${result.data.teachers.length} معلم`
-          )
-        } else {
-          toast.error('فشل رفع الملف. يرجى مراجعة الأخطاء')
-        }
-        
-        setUploading(false)
+      if (result.success && result.data) {
+        setSchedules((current) => [...(current || []), result.data!])
+        toast.success(
+          `✅ تم تحويل الملف ورفعه بنجاح! تم استخراج ${result.data.teachers.length} معلم`
+        )
+      } else {
+        toast.error('❌ فشل رفع الملف. يرجى مراجعة الأخطاء')
       }
-
-      reader.onerror = () => {
-        toast.error('خطأ في قراءة الملف')
-        setUploading(false)
-      }
-
-      reader.readAsText(file, 'UTF-8')
+      
+      setUploading(false)
     } catch (error) {
-      toast.error('حدث خطأ غير متوقع')
+      toast.error('❌ حدث خطأ غير متوقع أثناء معالجة الملف')
       setUploading(false)
     }
   }
@@ -65,9 +67,9 @@ export function XMLUploadPage() {
     <div className="min-h-screen bg-background" dir="rtl">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2">تحميل الجدول الدراسي</h1>
+          <h1 className="text-3xl font-bold mb-2">📂 نظام رفع ملفات XML</h1>
           <p className="text-muted-foreground mb-8">
-            قم برفع ملف XML المستخرج من برنامج aSc Timetables
+            قم باختيار ملف XML من aSc TimeTables وسيتم تحويله تلقائيًا إلى UTF-8 بدون BOM قبل رفعه
           </p>
 
           <Tabs defaultValue="upload" className="space-y-6">
@@ -85,9 +87,9 @@ export function XMLUploadPage() {
             <TabsContent value="upload" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>رفع ملف XML</CardTitle>
+                  <CardTitle>📂 رفع ملف XML</CardTitle>
                   <CardDescription>
-                    يجب أن يكون الملف محفوظاً بترميز UTF-8
+                    سيتم تحويل الملف تلقائيًا إلى UTF-8 بدون BOM قبل المعالجة
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

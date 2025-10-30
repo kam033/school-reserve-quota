@@ -13,11 +13,11 @@ This system handles XML parsing, user authentication, role-based views, and data
 ## Essential Features
 
 ### XML File Upload & Parsing
-- **Functionality**: Upload and parse aSc Timetables XML files with automatic encoding detection, star removal, and comprehensive data extraction (teachers, classes, subjects, periods, schedules)
-- **Purpose**: Automate schedule data entry with robust error handling and user guidance to ensure accurate Arabic text rendering and complete data import
+- **Functionality**: Upload and parse aSc Timetables XML files with **automatic UTF-8 conversion without BOM**, automatic star removal, and comprehensive data extraction (teachers, classes, subjects, periods, schedules)
+- **Purpose**: Automate schedule data entry with robust error handling and user guidance to ensure accurate Arabic text rendering and complete data import. Files are automatically normalized to UTF-8 without BOM regardless of source encoding (ANSI, UTF-8 with BOM, etc.)
 - **Trigger**: User clicks "تحميل الجدول" button and selects XML file, or accesses "دليل التحضير" for preparation guidance
-- **Progression**: File select → UTF-8 encoding check → Automatic star (*) removal from IDs → XML parsing → Multi-section data extraction (days, periods, teachers, classes, subjects, classrooms, schedules) → Encoding validation → Error/warning display → Success confirmation → Data storage
-- **Success criteria**: System correctly extracts all data sections; automatically fixes star notation in IDs; detects and reports Arabic encoding issues; shows detailed warnings for missing UTF-8 headers, duplicate entries, and gender field inconsistencies; provides interactive guide with downloadable sample XML; displays comprehensive statistics of extracted data
+- **Progression**: File select → **Automatic UTF-8 without BOM conversion** → Toast notification showing conversion in progress → Automatic star (*) removal from IDs → XML parsing → Multi-section data extraction (days, periods, teachers, classes, subjects, classrooms, schedules) → Encoding validation → Error/warning display → Success confirmation with emoji indicators (✅/❌) → Data storage
+- **Success criteria**: System automatically converts any encoding to UTF-8 without BOM before processing; correctly extracts all data sections; automatically fixes star notation in IDs; detects and reports Arabic encoding issues; shows detailed warnings for missing UTF-8 headers, duplicate entries, and gender field inconsistencies; provides interactive guide with downloadable sample XML; displays comprehensive statistics of extracted data; shows clear success/error messages with emoji indicators
 
 ### User Authentication & Role Management
 - **Functionality**: Three-tier access system (System Admin, School Director, Teacher) with role-based permissions
@@ -50,8 +50,8 @@ This system handles XML parsing, user authentication, role-based views, and data
 ## Edge Case Handling
 
 - **Malformed XML** - Display specific error message in Arabic indicating parsing failure; offer validation tips and link to preparation guide
-- **Mixed/Incorrect Encoding** - Auto-detect characters like � or ?, show specific error with affected names, provide UTF-8 conversion guidance in dedicated guide tab
-- **Missing UTF-8 Declaration** - Show warning suggesting addition of <?xml version="1.0" encoding="UTF-8"?> header
+- **Mixed/Incorrect Encoding** - **Automatically normalize any encoding to UTF-8 without BOM** before parsing; show toast notification during conversion; handle ANSI, UTF-8 with BOM, and other encodings transparently
+- **Missing UTF-8 Declaration** - System handles this automatically through normalization; no longer requires manual intervention
 - **Star Notation in IDs** - Automatically remove * prefix from all ID fields (id="*1" → id="1"); show warning count of cleaned IDs
 - **Incorrect Gender Field** - Detect gender="F" and warn user; suggest changing to "M" or removing attribute
 - **Duplicate Teachers** - Flag duplicates with warning showing both ID and name; continue processing but alert user
