@@ -98,6 +98,7 @@ export interface ScheduleData {
   schedules: TimeTableSchedule[]
   schoolId: string
   uploadDate: string
+  approved?: boolean
 }
 
 export interface DashboardStats {

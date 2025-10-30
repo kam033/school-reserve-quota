@@ -104,6 +104,23 @@ export function XMLUploadPage() {
     }
   }
 
+  const handleApprove = (scheduleData: ScheduleData) => {
+    setSchedules((current) => 
+      (current || []).map(s => 
+        s === scheduleData ? { ...s, approved: true } : s
+      )
+    )
+  }
+
+  const handleDelete = () => {
+    setLastUploadedSchedule(null)
+    setParseResult(null)
+    setSchedules((current) => {
+      if (!current || current.length === 0) return []
+      return current.slice(0, -1)
+    })
+  }
+
   return (
     <div className="min-h-screen bg-background" dir="rtl">
       <div className="container mx-auto px-4 py-8">
@@ -230,7 +247,11 @@ export function XMLUploadPage() {
 
               {lastUploadedSchedule && (
                 <div className="space-y-6">
-                  <TeacherDataTable scheduleData={lastUploadedSchedule} />
+                  <TeacherDataTable 
+                    scheduleData={lastUploadedSchedule}
+                    onApprove={handleApprove}
+                    onDelete={handleDelete}
+                  />
                 </div>
               )}
 

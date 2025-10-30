@@ -1,12 +1,16 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { ScheduleData } from '@/lib/types'
-import { User, Books, Clock } from '@phosphor-icons/react'
+import { User, Books, Clock, CheckCircle, Trash } from '@phosphor-icons/react'
+import { toast } from 'sonner'
 
 interface TeacherDataTableProps {
   scheduleData: ScheduleData
+  onApprove?: (scheduleData: ScheduleData) => void
+  onDelete?: () => void
 }
 
 interface TeacherDisplayData {
@@ -16,7 +20,9 @@ interface TeacherDisplayData {
   weeklyPeriods: number
 }
 
-export function TeacherDataTable({ scheduleData }: TeacherDataTableProps) {
+export function TeacherDataTable({ scheduleData, onApprove, onDelete }: TeacherDataTableProps) {
+  const [isApproved, setIsApproved] = useState(false)
+
   const teacherData = useMemo<TeacherDisplayData[]>(() => {
     const teacherScheduleCount = new Map<string, number>()
 
@@ -45,16 +51,54 @@ export function TeacherDataTable({ scheduleData }: TeacherDataTableProps) {
     return teacherData.reduce((sum, t) => sum + t.weeklyPeriods, 0)
   }, [teacherData])
 
+  const handleApprove = () => {
+    setIsApproved(true)
+    onApprove?.(scheduleData)
+    toast.success('✅ تم اعتماد البيانات بنجاح')
+  }
+
+  const handleDelete = () => {
+    if (window.confirm('هل أنت متأكد من حذف هذه البيانات؟')) {
+      onDelete?.()
+      toast.success('🗑️ تم حذف البيانات بنجاح')
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <User className="w-5 h-5" />
-          بيانات المعلمين
-        </CardTitle>
-        <CardDescription>
-          عرض أسماء المعلمين مع المواد وعدد الحصص الأسبوعية لكل معلم
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              بيانات المعلمين
+            </CardTitle>
+            <CardDescription>
+              عرض أسماء المعلمين مع المواد وعدد الحصص الأسبوعية لكل معلم
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="default"
+              size="lg"
+              onClick={handleApprove}
+              disabled={isApproved}
+              className="gap-2"
+            >
+              <CheckCircle className="w-5 h-5" />
+              {isApproved ? 'تم الاعتماد' : 'اعتماد البيانات'}
+            </Button>
+            <Button
+              variant="destructive"
+              size="lg"
+              onClick={handleDelete}
+              className="gap-2"
+            >
+              <Trash className="w-5 h-5" />
+              حذف
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
