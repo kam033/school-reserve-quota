@@ -3,8 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ScheduleData } from '@/lib/types'
-import { User, Books, Clock, CheckCircle, Trash } from '@phosphor-icons/react'
+import { User, Books, Clock, CheckCircle, Trash, Info } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
 interface TeacherDataTableProps {
@@ -21,7 +22,7 @@ interface TeacherDisplayData {
 }
 
 export function TeacherDataTable({ scheduleData, onApprove, onDelete }: TeacherDataTableProps) {
-  const [isApproved, setIsApproved] = useState(false)
+  const [isApproved, setIsApproved] = useState(scheduleData.approved || false)
 
   const teacherData = useMemo<TeacherDisplayData[]>(() => {
     const teacherScheduleCount = new Map<string, number>()
@@ -53,12 +54,19 @@ export function TeacherDataTable({ scheduleData, onApprove, onDelete }: TeacherD
 
   const handleApprove = () => {
     setIsApproved(true)
-    onApprove?.(scheduleData)
-    toast.success('✅ تم اعتماد البيانات بنجاح')
+    const approvedData = { 
+      ...scheduleData, 
+      approved: true,
+      approvedDate: new Date().toISOString()
+    }
+    onApprove?.(approvedData)
+    toast.success('✅ تم اعتماد البيانات بنجاح - يمكن الآن استخدام الجدول في النظام', {
+      duration: 4000,
+    })
   }
 
   const handleDelete = () => {
-    if (window.confirm('هل أنت متأكد من حذف هذه البيانات؟')) {
+    if (window.confirm('⚠️ هل أنت متأكد من حذف هذه البيانات؟ سيتم حذف جميع معلومات المعلمين والحصص المرتبطة بهذا الجدول.')) {
       onDelete?.()
       toast.success('🗑️ تم حذف البيانات بنجاح')
     }
@@ -72,22 +80,39 @@ export function TeacherDataTable({ scheduleData, onApprove, onDelete }: TeacherD
             <CardTitle className="flex items-center gap-2">
               <User className="w-5 h-5" />
               بيانات المعلمين
+              {isApproved && (
+                <Badge className="bg-accent text-accent-foreground mr-2">
+                  ✓ معتمد
+                </Badge>
+              )}
             </CardTitle>
             <CardDescription>
               عرض أسماء المعلمين مع المواد وعدد الحصص الأسبوعية لكل معلم
             </CardDescription>
           </div>
           <div className="flex items-center gap-3">
-            <Button
-              variant="default"
-              size="lg"
-              onClick={handleApprove}
-              disabled={isApproved}
-              className="gap-2"
-            >
-              <CheckCircle className="w-5 h-5" />
-              {isApproved ? 'تم الاعتماد' : 'اعتماد البيانات'}
-            </Button>
+            {!isApproved && (
+              <Button
+                variant="default"
+                size="lg"
+                onClick={handleApprove}
+                className="gap-2 bg-accent hover:bg-accent/90"
+              >
+                <CheckCircle className="w-5 h-5" />
+                اعتماد البيانات
+              </Button>
+            )}
+            {isApproved && (
+              <Button
+                variant="outline"
+                size="lg"
+                disabled
+                className="gap-2 border-accent text-accent"
+              >
+                <CheckCircle className="w-5 h-5" />
+                تم الاعتماد
+              </Button>
+            )}
             <Button
               variant="destructive"
               size="lg"
@@ -95,12 +120,36 @@ export function TeacherDataTable({ scheduleData, onApprove, onDelete }: TeacherD
               className="gap-2"
             >
               <Trash className="w-5 h-5" />
-              حذف
+              حذف البيانات
             </Button>
           </div>
         </div>
       </CardHeader>
       <CardContent>
+        {!isApproved && (
+          <Alert className="mb-6 bg-amber-50 border-amber-200">
+            <Info className="h-5 w-5 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              <strong>ملاحظة:</strong> يرجى مراجعة البيانات أدناه والتأكد من صحتها، ثم الضغط على زر "اعتماد البيانات" لتفعيل استخدام هذا الجدول في النظام.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {isApproved && scheduleData.approvedDate && (
+          <Alert className="mb-6 bg-accent/10 border-accent">
+            <CheckCircle className="h-5 w-5 text-accent" />
+            <AlertDescription>
+              <strong>تم الاعتماد:</strong> تم اعتماد هذه البيانات في {new Date(scheduleData.approvedDate).toLocaleString('ar-SA', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card className="bg-primary/5 border-primary/20">
             <CardContent className="pt-6">

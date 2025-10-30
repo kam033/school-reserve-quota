@@ -99,6 +99,8 @@ export interface ScheduleData {
   schoolId: string
   uploadDate: string
   approved?: boolean
+  approvedDate?: string
+  approvedBy?: string
 }
 
 export interface DashboardStats {

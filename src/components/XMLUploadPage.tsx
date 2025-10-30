@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
-import { CloudArrowUp, WarningCircle, CheckCircle, BookOpen } from '@phosphor-icons/react'
+import { CloudArrowUp, WarningCircle, CheckCircle, BookOpen, Trash } from '@phosphor-icons/react'
 import { parseXMLFile } from '@/lib/xmlParser'
 import { ScheduleData } from '@/lib/types'
 import { XMLGuide } from '@/components/XMLGuide'
@@ -119,6 +120,25 @@ export function XMLUploadPage() {
       if (!current || current.length === 0) return []
       return current.slice(0, -1)
     })
+    toast.success('🗑️ تم حذف الجدول الأخير بنجاح')
+  }
+
+  const handleDeleteSchedule = (index: number) => {
+    if (window.confirm(`⚠️ هل أنت متأكد من حذف الجدول رقم ${index + 1}؟`)) {
+      setSchedules((current) => {
+        if (!current) return []
+        const newSchedules = [...current]
+        newSchedules.splice(index, 1)
+        return newSchedules
+      })
+      
+      if (lastUploadedSchedule && schedules && schedules[index] === lastUploadedSchedule) {
+        setLastUploadedSchedule(null)
+        setParseResult(null)
+      }
+      
+      toast.success('🗑️ تم حذف الجدول بنجاح')
+    }
   }
 
   return (
@@ -258,6 +278,9 @@ export function XMLUploadPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>الجداول المرفوعة</CardTitle>
+                  <CardDescription>
+                    عرض جميع الجداول التي تم رفعها مع حالة الاعتماد
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {schedules && schedules.length > 0 ? (
@@ -265,17 +288,50 @@ export function XMLUploadPage() {
                       {schedules.map((schedule, i) => (
                         <div
                           key={i}
-                          className="flex items-center justify-between p-4 border rounded-lg"
+                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors group"
                         >
-                          <div>
-                            <p className="font-medium">مدرسة {i + 1}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {schedule.teachers.length} معلم • {schedule.schedules?.length || 0} حصة
-                            </p>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-1">
+                              <p className="font-medium text-lg">جدول رقم {i + 1}</p>
+                              {schedule.approved ? (
+                                <Badge className="bg-accent text-accent-foreground">
+                                  <CheckCircle className="w-3 h-3 ml-1" />
+                                  معتمد
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="border-amber-500 text-amber-700">
+                                  <WarningCircle className="w-3 h-3 ml-1" />
+                                  غير معتمد
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span>👥 {schedule.teachers.length} معلم</span>
+                              <span>📚 {schedule.subjects.length} مادة</span>
+                              <span>🏫 {schedule.classes.length} فصل</span>
+                              <span>📅 {schedule.schedules?.length || 0} حصة</span>
+                            </div>
                           </div>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(schedule.uploadDate).toLocaleDateString('ar-SA')}
-                          </p>
+                          <div className="flex items-center gap-4">
+                            <div className="text-left">
+                              <p className="text-sm text-muted-foreground">
+                                تاريخ الرفع: {new Date(schedule.uploadDate).toLocaleDateString('ar-SA')}
+                              </p>
+                              {schedule.approved && schedule.approvedDate && (
+                                <p className="text-xs text-accent mt-1">
+                                  اعتمد في: {new Date(schedule.approvedDate).toLocaleDateString('ar-SA')}
+                                </p>
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteSchedule(i)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
