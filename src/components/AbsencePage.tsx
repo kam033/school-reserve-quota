@@ -21,21 +21,23 @@ export function AbsencePage() {
   const [substituteId, setSubstituteId] = useState<string>('')
 
   const allTeachers = useMemo(() => {
-    if (!schedules) return []
-    return schedules.flatMap((schedule) => schedule.teachers)
+    if (!schedules || !Array.isArray(schedules)) return []
+    return schedules.flatMap((schedule) => schedule.teachers || [])
   }, [schedules])
 
   const availableSubstitutes = useMemo(() => {
-    if (!schedules || !selectedDay || selectedPeriods.length === 0) return []
+    if (!schedules || !Array.isArray(schedules) || !selectedDay || selectedPeriods.length === 0) return []
     
     const busyTeacherIds = new Set<string>()
     
     schedules.forEach((schedule) => {
-      schedule.periods.forEach((period) => {
-        if (period.day === selectedDay && selectedPeriods.includes(period.periodNumber)) {
-          busyTeacherIds.add(period.teacherId)
-        }
-      })
+      if (schedule.periods && Array.isArray(schedule.periods)) {
+        schedule.periods.forEach((period) => {
+          if (period.day === selectedDay && selectedPeriods.includes(period.periodNumber)) {
+            busyTeacherIds.add(period.teacherId)
+          }
+        })
+      }
     })
 
     return allTeachers.filter((teacher) => 

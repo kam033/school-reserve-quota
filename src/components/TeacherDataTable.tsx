@@ -27,15 +27,17 @@ export function TeacherDataTable({ scheduleData, onApprove, onDelete }: TeacherD
   const teacherData = useMemo<TeacherDisplayData[]>(() => {
     const teacherScheduleCount = new Map<string, number>()
 
-    scheduleData.schedules.forEach((schedule) => {
-      const teacherId = schedule.teacherID
-      if (!teacherScheduleCount.has(teacherId)) {
-        teacherScheduleCount.set(teacherId, 0)
-      }
-      teacherScheduleCount.set(teacherId, teacherScheduleCount.get(teacherId)! + 1)
-    })
+    if (scheduleData.schedules && Array.isArray(scheduleData.schedules)) {
+      scheduleData.schedules.forEach((schedule) => {
+        const teacherId = schedule.teacherID
+        if (!teacherScheduleCount.has(teacherId)) {
+          teacherScheduleCount.set(teacherId, 0)
+        }
+        teacherScheduleCount.set(teacherId, teacherScheduleCount.get(teacherId)! + 1)
+      })
+    }
 
-    return scheduleData.teachers.map((teacher) => {
+    return (scheduleData.teachers || []).map((teacher) => {
       const originalId = teacher.originalId || teacher.id
       const weeklyPeriods = teacherScheduleCount.get(originalId) || 0
 

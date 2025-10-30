@@ -10,7 +10,7 @@ export function StatsPage() {
   const [absences] = useKV<Absence[]>('absences', [])
 
   const stats = useMemo(() => {
-    if (!schedules) {
+    if (!schedules || !Array.isArray(schedules)) {
       return {
         totalTeachers: 0,
         totalSubjects: 0,
@@ -22,9 +22,9 @@ export function StatsPage() {
       }
     }
 
-    const allTeachers = schedules.flatMap((s) => s.teachers)
-    const allPeriods = schedules.flatMap((s) => s.periods)
-    const uniqueSubjects = new Set(allTeachers.map((t) => t.subject))
+    const allTeachers = schedules.flatMap((s) => s.teachers || [])
+    const allPeriods = schedules.flatMap((s) => s.periods || [])
+    const uniqueSubjects = new Set(allTeachers.map((t) => t.subject).filter(Boolean))
     
     const today = new Date().toISOString().split('T')[0]
     const todayAbsences = (absences || []).filter((a) => a.date === today)
@@ -117,11 +117,11 @@ export function StatsPage() {
   ]
 
   const recentAbsences = useMemo(() => {
-    if (!absences || !schedules) return []
+    if (!absences || !Array.isArray(absences) || !schedules || !Array.isArray(schedules)) return []
     
-    const allTeachers = schedules.flatMap((s) => s.teachers)
+    const allTeachers = schedules.flatMap((s) => s.teachers || [])
     
-    return (absences || [])
+    return absences
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 10)
       .map((absence) => ({

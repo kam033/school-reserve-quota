@@ -25,11 +25,13 @@ export function ScheduleViewPage() {
   const latestSchedule = schedules[schedules.length - 1]
 
   const getDayName = (dayID: string): string => {
+    if (!latestSchedule.days || !Array.isArray(latestSchedule.days)) return `يوم ${dayID}`
     const day = latestSchedule.days.find((d) => d.day === dayID)
     return day?.name || `يوم ${dayID}`
   }
 
   const getTeacherName = (teacherID: string): string => {
+    if (!latestSchedule.teachers || !Array.isArray(latestSchedule.teachers)) return `معلم ${teacherID}`
     const teacher = latestSchedule.teachers.find(
       (t) => t.originalId === teacherID || t.id.endsWith(`-${teacherID}`)
     )
@@ -37,6 +39,7 @@ export function ScheduleViewPage() {
   }
 
   const getClassName = (classID: string): string => {
+    if (!latestSchedule.classes || !Array.isArray(latestSchedule.classes)) return `فصل ${classID}`
     const cls = latestSchedule.classes.find(
       (c) => c.originalId === classID || c.id.endsWith(`-${classID}`)
     )
@@ -44,6 +47,7 @@ export function ScheduleViewPage() {
   }
 
   const getSubjectName = (subjectID: string): string => {
+    if (!latestSchedule.subjects || !Array.isArray(latestSchedule.subjects)) return `مادة ${subjectID}`
     const subject = latestSchedule.subjects.find(
       (s) => s.originalId === subjectID || s.id.endsWith(`-${subjectID}`)
     )
@@ -51,6 +55,7 @@ export function ScheduleViewPage() {
   }
 
   const getClassroomName = (classroomID: string): string => {
+    if (!latestSchedule.classrooms || !Array.isArray(latestSchedule.classrooms)) return `غرفة ${classroomID}`
     const classroom = latestSchedule.classrooms.find(
       (c) => c.originalId === classroomID || c.id.endsWith(`-${classroomID}`)
     )
@@ -74,7 +79,7 @@ export function ScheduleViewPage() {
               <UsersThree className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{latestSchedule.teachers.length}</div>
+              <div className="text-2xl font-bold">{latestSchedule.teachers?.length || 0}</div>
             </CardContent>
           </Card>
 
@@ -84,7 +89,7 @@ export function ScheduleViewPage() {
               <Door className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{latestSchedule.classes.length}</div>
+              <div className="text-2xl font-bold">{latestSchedule.classes?.length || 0}</div>
             </CardContent>
           </Card>
 
@@ -94,7 +99,7 @@ export function ScheduleViewPage() {
               <Books className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{latestSchedule.subjects.length}</div>
+              <div className="text-2xl font-bold">{latestSchedule.subjects?.length || 0}</div>
             </CardContent>
           </Card>
 
@@ -104,7 +109,7 @@ export function ScheduleViewPage() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{latestSchedule.days.length}</div>
+              <div className="text-2xl font-bold">{latestSchedule.days?.length || 0}</div>
             </CardContent>
           </Card>
 
@@ -114,7 +119,7 @@ export function ScheduleViewPage() {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{latestSchedule.schedules.length}</div>
+              <div className="text-2xl font-bold">{latestSchedule.schedules?.length || 0}</div>
             </CardContent>
           </Card>
         </div>
@@ -147,20 +152,28 @@ export function ScheduleViewPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {latestSchedule.schedules.map((schedule) => (
-                        <TableRow key={schedule.id}>
-                          <TableCell>{getDayName(schedule.dayID)}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{schedule.period}</Badge>
+                      {latestSchedule.schedules && latestSchedule.schedules.length > 0 ? (
+                        latestSchedule.schedules.map((schedule) => (
+                          <TableRow key={schedule.id}>
+                            <TableCell>{getDayName(schedule.dayID)}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{schedule.period}</Badge>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {getTeacherName(schedule.teacherID)}
+                            </TableCell>
+                            <TableCell>{schedule.classID ? getClassName(schedule.classID) : '-'}</TableCell>
+                            <TableCell>{schedule.subjectGradeID ? getSubjectName(schedule.subjectGradeID) : '-'}</TableCell>
+                            <TableCell>{schedule.schoolRoomID ? getClassroomName(schedule.schoolRoomID) : '-'}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                            لا توجد حصص مسجلة
                           </TableCell>
-                          <TableCell className="font-medium">
-                            {getTeacherName(schedule.teacherID)}
-                          </TableCell>
-                          <TableCell>{schedule.classID ? getClassName(schedule.classID) : '-'}</TableCell>
-                          <TableCell>{schedule.subjectGradeID ? getSubjectName(schedule.subjectGradeID) : '-'}</TableCell>
-                          <TableCell>{schedule.schoolRoomID ? getClassroomName(schedule.schoolRoomID) : '-'}</TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </ScrollArea>
@@ -185,22 +198,30 @@ export function ScheduleViewPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {latestSchedule.teachers.map((teacher) => (
-                        <TableRow key={teacher.id}>
-                          <TableCell>{teacher.originalId}</TableCell>
-                          <TableCell className="font-medium">{teacher.name}</TableCell>
-                          <TableCell>{teacher.short || '-'}</TableCell>
-                          <TableCell>
-                            {teacher.gender === 'M' ? (
-                              <Badge variant="secondary">ذكر</Badge>
-                            ) : teacher.gender === 'F' ? (
-                              <Badge variant="outline">أنثى</Badge>
-                            ) : (
-                              '-'
-                            )}
+                      {latestSchedule.teachers && latestSchedule.teachers.length > 0 ? (
+                        latestSchedule.teachers.map((teacher) => (
+                          <TableRow key={teacher.id}>
+                            <TableCell>{teacher.originalId}</TableCell>
+                            <TableCell className="font-medium">{teacher.name}</TableCell>
+                            <TableCell>{teacher.short || '-'}</TableCell>
+                            <TableCell>
+                              {teacher.gender === 'M' ? (
+                                <Badge variant="secondary">ذكر</Badge>
+                              ) : teacher.gender === 'F' ? (
+                                <Badge variant="outline">أنثى</Badge>
+                              ) : (
+                                '-'
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                            لا توجد بيانات معلمين
                           </TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </ScrollArea>
@@ -225,16 +246,24 @@ export function ScheduleViewPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {latestSchedule.classes.map((cls) => (
-                        <TableRow key={cls.id}>
-                          <TableCell>{cls.originalId}</TableCell>
-                          <TableCell className="font-medium">{cls.name}</TableCell>
-                          <TableCell>{cls.short}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{cls.grade || '-'}</Badge>
+                      {latestSchedule.classes && latestSchedule.classes.length > 0 ? (
+                        latestSchedule.classes.map((cls) => (
+                          <TableRow key={cls.id}>
+                            <TableCell>{cls.originalId}</TableCell>
+                            <TableCell className="font-medium">{cls.name}</TableCell>
+                            <TableCell>{cls.short}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{cls.grade || '-'}</Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                            لا توجد بيانات فصول
                           </TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </ScrollArea>
@@ -258,13 +287,21 @@ export function ScheduleViewPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {latestSchedule.subjects.map((subject) => (
-                        <TableRow key={subject.id}>
-                          <TableCell>{subject.originalId}</TableCell>
-                          <TableCell className="font-medium">{subject.name}</TableCell>
-                          <TableCell>{subject.short}</TableCell>
+                      {latestSchedule.subjects && latestSchedule.subjects.length > 0 ? (
+                        latestSchedule.subjects.map((subject) => (
+                          <TableRow key={subject.id}>
+                            <TableCell>{subject.originalId}</TableCell>
+                            <TableCell className="font-medium">{subject.name}</TableCell>
+                            <TableCell>{subject.short}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                            لا توجد بيانات مواد
+                          </TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </ScrollArea>
@@ -288,13 +325,21 @@ export function ScheduleViewPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {latestSchedule.classrooms.map((classroom) => (
-                        <TableRow key={classroom.id}>
-                          <TableCell>{classroom.originalId}</TableCell>
-                          <TableCell className="font-medium">{classroom.name}</TableCell>
-                          <TableCell>{classroom.short}</TableCell>
+                      {latestSchedule.classrooms && latestSchedule.classrooms.length > 0 ? (
+                        latestSchedule.classrooms.map((classroom) => (
+                          <TableRow key={classroom.id}>
+                            <TableCell>{classroom.originalId}</TableCell>
+                            <TableCell className="font-medium">{classroom.name}</TableCell>
+                            <TableCell>{classroom.short}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                            لا توجد بيانات غرف دراسية
+                          </TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </ScrollArea>
