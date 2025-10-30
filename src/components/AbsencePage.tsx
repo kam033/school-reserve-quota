@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import { ScheduleData, Absence, Teacher } from '@/lib/types'
-import { CalendarBlank, UserCircleMinus, Trash, Broom, BookOpen, GraduationCap, Users, Warning, Download } from '@phosphor-icons/react'
+import { CalendarBlank, UserCircleMinus, Trash, Broom, BookOpen, GraduationCap, Users, Warning, Download, Plus } from '@phosphor-icons/react'
 
 type FilterMode = 'all' | 'subject' | 'grade'
 
@@ -31,6 +31,8 @@ export function AbsencePage() {
   const [deleteAllUnknownDialogOpen, setDeleteAllUnknownDialogOpen] = useState(false)
   const [absenceToDelete, setAbsenceToDelete] = useState<string | null>(null)
   const [substituteWarning, setSubstituteWarning] = useState<string | null>(null)
+  const [absentTeachersList, setAbsentTeachersList] = useState<Array<{ id: string; subject: string }>>([])
+  const [showAddTeacherDropdown, setShowAddTeacherDropdown] = useState(false)
 
   const approvedSchedules = useMemo(() => {
     if (!schedules || !Array.isArray(schedules) || schedules.length === 0) return []
@@ -179,6 +181,38 @@ export function AbsencePage() {
     setSubstituteId('')
     setSubstituteWarning(null)
   }, [selectedTeacherId])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (!target.closest('.dropdown-container')) {
+        setShowAddTeacherDropdown(false)
+      }
+    }
+
+    if (showAddTeacherDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showAddTeacherDropdown])
+
+  const handleAddAbsentTeacher = (teacherId: string) => {
+    const teacher = getTeacherById(teacherId)
+    if (teacher && !absentTeachersList.some(t => t.id === teacherId)) {
+      setAbsentTeachersList((current) => [...current, { id: teacherId, subject: teacher.subject }])
+      toast.success(`تمت إضافة ${teacher.name}`)
+    }
+    setShowAddTeacherDropdown(false)
+  }
+
+  const handleRemoveAbsentTeacher = (teacherId: string) => {
+    setAbsentTeachersList((current) => current.filter(t => t.id !== teacherId))
+    const teacherName = getTeacherName(teacherId)
+    toast.success(`تم إزالة ${teacherName}`)
+  }
 
   const handleRecordAbsence = () => {
     if (!selectedTeacherId) {
@@ -595,6 +629,81 @@ export function AbsencePage() {
                     </span>
                   </div>
                 )}
+
+                {absentTeachersList.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">المعلمين الغائبين المضافين:</Label>
+                    <div className="space-y-2">
+                      {absentTeachersList.map((absentTeacher) => (
+                        <div
+                          key={absentTeacher.id}
+                          className="flex items-center justify-between gap-2 p-3 bg-card border border-border rounded-md"
+                        >
+                          <div className="flex items-center gap-2 flex-1">
+                            <BookOpen className="w-4 h-4 text-primary" />
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium">{getTeacherName(absentTeacher.id)}</span>
+                              <span className="text-xs text-muted-foreground">{absentTeacher.subject}</span>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveAbsentTeacher(absentTeacher.id)}
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="relative dropdown-container">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowAddTeacherDropdown(!showAddTeacherDropdown)}
+                    className="w-full gap-2"
+                    disabled={allTeachers.length === 0}
+                  >
+                    <Plus className="w-4 h-4" />
+                    إضافة معلم غائب
+                  </Button>
+                  
+                  {showAddTeacherDropdown && (
+                    <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-popover border border-border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
+                      {allTeachers
+                        .filter(t => 
+                          t.id !== selectedTeacherId && 
+                          !absentTeachersList.some(at => at.id === t.id)
+                        )
+                        .sort((a, b) => a.name.localeCompare(b.name, 'ar'))
+                        .map((teacher) => (
+                          <button
+                            key={teacher.id}
+                            type="button"
+                            onClick={() => handleAddAbsentTeacher(teacher.id)}
+                            className="w-full px-3 py-3 text-right hover:bg-accent transition-colors flex items-center justify-between gap-2 border-b border-border last:border-b-0"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{teacher.name}</span>
+                              <span className="text-muted-foreground text-sm">({teacher.subject})</span>
+                            </div>
+                          </button>
+                        ))}
+                      {allTeachers.filter(t => 
+                        t.id !== selectedTeacherId && 
+                        !absentTeachersList.some(at => at.id === t.id)
+                      ).length === 0 && (
+                        <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+                          لا يوجد معلمين إضافيين متاحين
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2">
