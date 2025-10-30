@@ -19,14 +19,37 @@ export function XMLUploadPage() {
   } | null>(null)
 
   const normalizeToUTF8 = async (file: File): Promise<string> => {
-    const text = await file.text()
-    const utf8Blob = new Blob([text], {
-      type: 'text/xml;charset=utf-8',
-    })
-    const normalizedFile = new File([utf8Blob], file.name, {
-      type: 'text/xml;charset=utf-8',
-    })
-    return await normalizedFile.text()
+    const arrayBuffer = await file.arrayBuffer()
+    const uint8Array = new Uint8Array(arrayBuffer)
+    
+    let text = ''
+    const encodings = ['utf-8', 'windows-1256', 'iso-8859-6']
+    
+    for (const encoding of encodings) {
+      try {
+        const decoder = new TextDecoder(encoding, { fatal: true })
+        text = decoder.decode(uint8Array)
+        if (text.includes('<?xml') && !text.includes('�')) {
+          break
+        }
+      } catch {
+        continue
+      }
+    }
+    
+    if (!text || text.includes('�')) {
+      const decoder = new TextDecoder('utf-8', { fatal: false })
+      text = decoder.decode(uint8Array)
+    }
+    
+    text = text.replace(/\uFFFD/g, '')
+    text = text.replace(/�/g, '')
+    text = text.replace(/^\uFEFF/, '')
+    
+    const encoder = new TextEncoder()
+    const utf8Bytes = encoder.encode(text)
+    const utf8Decoder = new TextDecoder('utf-8')
+    return utf8Decoder.decode(utf8Bytes)
   }
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,10 +58,19 @@ export function XMLUploadPage() {
 
     setUploading(true)
     setParseResult(null)
-    toast.info('⏳ جارٍ فحص الملف وتحويله إلى UTF-8 بدون BOM ...')
+    toast.info('⏳ جارٍ قراءة الملف وتحويله تلقائيًا إلى UTF-8 بدون BOM...')
 
     try {
       const content = await normalizeToUTF8(file)
+      
+      if (!content || content.trim().length === 0) {
+        toast.error('❌ الملف فارغ أو لا يمكن قراءته')
+        setUploading(false)
+        return
+      }
+      
+      toast.info('⏳ جارٍ تحليل بيانات المعلمين والحصص...')
+      
       const schoolId = `school-${Date.now()}`
       const result = parseXMLFile(content, schoolId)
 
@@ -50,7 +82,7 @@ export function XMLUploadPage() {
       if (result.success && result.data) {
         setSchedules((current) => [...(current || []), result.data!])
         toast.success(
-          `✅ تم تحويل الملف ورفعه بنجاح! تم استخراج ${result.data.teachers.length} معلم`
+          `✅ تم تحويل الملف ورفعه بنجاح! تم استخراج ${result.data.teachers.length} معلم و ${result.data.schedules?.length || 0} حصة`
         )
       } else {
         toast.error('❌ فشل رفع الملف. يرجى مراجعة الأخطاء')
@@ -58,7 +90,12 @@ export function XMLUploadPage() {
       
       setUploading(false)
     } catch (error) {
-      toast.error('❌ حدث خطأ غير متوقع أثناء معالجة الملف')
+      const errorMessage = error instanceof Error ? error.message : 'خطأ غير معروف'
+      toast.error(`❌ حدث خطأ أثناء معالجة الملف: ${errorMessage}`)
+      setParseResult({
+        errors: [errorMessage],
+        warnings: []
+      })
       setUploading(false)
     }
   }
@@ -69,7 +106,7 @@ export function XMLUploadPage() {
         <div className="max-w-5xl mx-auto">
           <h1 className="text-3xl font-bold mb-2">📂 نظام رفع ملفات XML</h1>
           <p className="text-muted-foreground mb-8">
-            قم باختيار ملف XML من aSc TimeTables وسيتم تحويله تلقائيًا إلى UTF-8 بدون BOM قبل رفعه
+            قم باختيار ملف XML من aSc TimeTables - سيتم تحويله تلقائيًا إلى UTF-8 بدون BOM وإزالة أي رموز غير مفهومة
           </p>
 
           <Tabs defaultValue="upload" className="space-y-6">
@@ -85,11 +122,43 @@ export function XMLUploadPage() {
             </TabsList>
 
             <TabsContent value="upload" className="space-y-6">
+              <Card className="bg-accent/5 border-accent">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-accent" />
+                    معالجة تلقائية للترميز
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-start gap-3">
+                      <span className="text-accent font-bold">1.</span>
+                      <p>قراءة محتوى الملف بأي ترميز (UTF-8، ANSI، Windows-1256، أو غيره)</p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="text-accent font-bold">2.</span>
+                      <p>تحويل الملف داخليًا إلى ترميز UTF-8 بدون BOM لضمان ظهور الحروف العربية بشكل سليم</p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="text-accent font-bold">3.</span>
+                      <p>إزالة أي رموز غير مفهومة (����) إن وُجدت</p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="text-accent font-bold">4.</span>
+                      <p>رفع النسخة النظيفة وتحليل بيانات المعلمين والحصص بشكل صحيح</p>
+                    </div>
+                    <div className="mt-4 p-3 bg-background rounded border">
+                      <p className="font-medium text-primary">✨ لا يحتاج المستخدم إلى تعديل الترميز يدويًا في Notepad++ — النظام يتولى ذلك تلقائيًا</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle>📂 رفع ملف XML</CardTitle>
                   <CardDescription>
-                    سيتم تحويل الملف تلقائيًا إلى UTF-8 بدون BOM قبل المعالجة
+                    النظام يقرأ الملف بأي ترميز ويحوله تلقائيًا إلى UTF-8 بدون BOM - لا حاجة للتعديل اليدوي
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
