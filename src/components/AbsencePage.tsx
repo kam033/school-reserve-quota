@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import { ScheduleData, Absence, Teacher } from '@/lib/types'
-import { CalendarBlank, UserCircleMinus } from '@phosphor-icons/react'
+import { CalendarBlank, UserCircleMinus, Trash } from '@phosphor-icons/react'
 
 export function AbsencePage() {
   const [schedules] = useKV<ScheduleData[]>('schedules', [])
@@ -95,6 +95,11 @@ export function AbsencePage() {
 
   const getTeacherName = (teacherId: string): string => {
     return allTeachers.find((t) => t.id === teacherId)?.name || 'غير معروف'
+  }
+
+  const handleDeleteAbsence = (absenceId: string) => {
+    setAbsences((current) => (current || []).filter((a) => a.id !== absenceId))
+    toast.success('تم حذف الغياب بنجاح')
   }
 
   const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس']
@@ -242,7 +247,17 @@ export function AbsencePage() {
                       >
                         <div className="flex items-center justify-between">
                           <p className="font-medium">{getTeacherName(absence.teacherId)}</p>
-                          <Badge variant="destructive">غائب</Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="destructive">غائب</Badge>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteAbsence(absence.id)}
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">الحصص:</span>
