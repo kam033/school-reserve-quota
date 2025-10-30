@@ -6,10 +6,12 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { useKV } from '@github/spark/hooks'
 import { ScheduleData, Absence, Teacher, Period } from '@/lib/types'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { ChartBar, Users, CheckCircle, WarningCircle, Sparkle } from '@phosphor-icons/react'
+import { ChartBar, Users, CheckCircle, WarningCircle, Sparkle, Trash } from '@phosphor-icons/react'
+import { toast } from 'sonner'
 
 interface TeacherDailyLoad {
   teacherId: string
@@ -57,6 +59,7 @@ export function SmartAnalyticsPage() {
   const [substituteSubject, setSubstituteSubject] = useState<string>('')
   const [substituteGrade, setSubstituteGrade] = useState<string>('')
   const [filterType, setFilterType] = useState<'all' | 'subject' | 'grade'>('all')
+  const [removedTeacherIds, setRemovedTeacherIds] = useState<Set<string>>(new Set())
 
   const approvedSchedules = useMemo(() => {
     if (!schedules || !Array.isArray(schedules) || schedules.length === 0) return []
@@ -241,9 +244,15 @@ export function SmartAnalyticsPage() {
 
     return scoredCandidates
       .filter((c) => c.score > -100)
+      .filter((c) => !removedTeacherIds.has(c.teacher.id))
       .sort((a, b) => b.score - a.score)
       .slice(0, 10)
-  }, [allTeachers, allPeriods, substituteDay, substitutePeriod, substituteSubject, substituteGrade, filterType, substituteLoadData])
+  }, [allTeachers, allPeriods, substituteDay, substitutePeriod, substituteSubject, substituteGrade, filterType, substituteLoadData, removedTeacherIds])
+
+  const handleRemoveTeacher = (teacherId: string, teacherName: string) => {
+    setRemovedTeacherIds((current) => new Set(current).add(teacherId))
+    toast.success(`🗑️ تم حذف ${teacherName} من قائمة الترشيحات بنجاح`)
+  }
 
   const getPercentageColor = (percentage: number): string => {
     if (percentage < 20) return 'text-accent'
@@ -548,12 +557,42 @@ export function SmartAnalyticsPage() {
                                 {candidate.teacher.subject}
                               </p>
                             </div>
-                            <Badge 
-                              variant={candidate.score >= 5 ? 'default' : 'secondary'}
-                              className="text-lg px-3"
-                            >
-                              {candidate.score} نقطة
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge 
+                                variant={candidate.score >= 5 ? 'default' : 'secondary'}
+                                className="text-lg px-3"
+                              >
+                                {candidate.score} نقطة
+                              </Badge>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button 
+                                    variant="destructive" 
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <Trash className="w-4 h-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent dir="rtl">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>⚠️ تأكيد الحذف</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      هل تريد حذف <strong>{candidate.teacher.name}</strong> من قائمة الترشيحات؟
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleRemoveTeacher(candidate.teacher.id, candidate.teacher.name)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      حذف
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
                           </div>
 
                           <div className="space-y-1">
