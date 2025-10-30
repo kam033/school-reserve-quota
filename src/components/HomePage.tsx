@@ -296,26 +296,13 @@ export function HomePage({ onNavigate }: HomePageProps) {
           </Card>
         )}
 
-        {currentUser && hasUnapprovedSchedule && (
-          <Alert className="mt-8 border-amber-500 bg-amber-50/50">
-            <WarningCircle className="h-5 w-5 text-amber-600" />
-            <AlertDescription className="text-amber-900">
-              <p className="font-medium mb-1">⚠️ لديك جدول غير معتمد</p>
-              <p className="text-sm">
-                يرجى الذهاب إلى صفحة "تحميل الجدول" واعتماد البيانات حتى تعمل جميع الأزرار بشكل صحيح.
-                الصفحات الأخرى تعرض البيانات المعتمدة فقط.
-              </p>
-            </AlertDescription>
-          </Alert>
-        )}
-
         {currentUser && !hasApprovedSchedule && schedules && schedules.length === 0 && (
           <Alert className="mt-8 border-blue-500 bg-blue-50/50">
             <WarningCircle className="h-5 w-5 text-blue-600" />
             <AlertDescription className="text-blue-900">
               <p className="font-medium mb-1">💡 ابدأ باستخدام النظام</p>
               <p className="text-sm">
-                لم تقم برفع أي جدول بعد. اضغط على "تحميل الجدول" لرفع ملف XML واعتماده.
+                لم تقم برفع أي جدول بعد. اضغط على "تحميل الجدول" لرفع ملف XML. سيتم اعتماد الجدول تلقائيًا عند الرفع.
               </p>
             </AlertDescription>
           </Alert>

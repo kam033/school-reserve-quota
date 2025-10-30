@@ -83,12 +83,17 @@ export function XMLUploadPage() {
       })
 
       if (result.success && result.data) {
-        setSchedules((current) => [...(current || []), result.data!])
-        setLastUploadedSchedule(result.data)
+        const approvedData = {
+          ...result.data,
+          approved: true,
+          approvedDate: new Date().toISOString()
+        }
+        setSchedules((current) => [...(current || []), approvedData])
+        setLastUploadedSchedule(approvedData)
         const teacherCount = result.data.teachers?.length || 0
         const scheduleCount = result.data.schedules?.length || 0
         toast.success(
-          `✅ تم تحويل الملف ورفعه بنجاح! تم استخراج ${teacherCount} معلم و ${scheduleCount} حصة`
+          `✅ تم تحويل الملف ورفعه واعتماده بنجاح! تم استخراج ${teacherCount} معلم و ${scheduleCount} حصة`
         )
       } else {
         toast.error('❌ فشل رفع الملف. يرجى مراجعة الأخطاء')
@@ -104,24 +109,6 @@ export function XMLUploadPage() {
         warnings: []
       })
       setUploading(false)
-    }
-  }
-
-  const handleApprove = (scheduleData: ScheduleData) => {
-    const approvedData = { 
-      ...scheduleData, 
-      approved: true,
-      approvedDate: scheduleData.approvedDate || new Date().toISOString()
-    }
-    
-    setSchedules((current) => 
-      (current || []).map(s => 
-        s === scheduleData ? approvedData : s
-      )
-    )
-    
-    if (lastUploadedSchedule === scheduleData) {
-      setLastUploadedSchedule(approvedData)
     }
   }
 
@@ -281,7 +268,6 @@ export function XMLUploadPage() {
                 <div className="space-y-6">
                   <TeacherDataTable 
                     scheduleData={lastUploadedSchedule}
-                    onApprove={handleApprove}
                     onDelete={handleDelete}
                   />
                 </div>

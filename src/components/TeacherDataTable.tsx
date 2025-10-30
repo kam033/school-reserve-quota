@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ScheduleData } from '@/lib/types'
-import { User, Books, Clock, CheckCircle, Trash, Info } from '@phosphor-icons/react'
+import { User, Books, Clock, CheckCircle, Trash } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
 interface TeacherDataTableProps {
@@ -22,7 +22,7 @@ interface TeacherDisplayData {
 }
 
 export function TeacherDataTable({ scheduleData, onApprove, onDelete }: TeacherDataTableProps) {
-  const [isApproved, setIsApproved] = useState(scheduleData.approved || false)
+  const isApproved = scheduleData.approved || false
 
   const teacherData = useMemo<TeacherDisplayData[]>(() => {
     const teacherScheduleCount = new Map<string, number>()
@@ -54,19 +54,6 @@ export function TeacherDataTable({ scheduleData, onApprove, onDelete }: TeacherD
     return teacherData.reduce((sum, t) => sum + t.weeklyPeriods, 0)
   }, [teacherData])
 
-  const handleApprove = () => {
-    const approvedData = { 
-      ...scheduleData, 
-      approved: true,
-      approvedDate: scheduleData.approvedDate || new Date().toISOString()
-    }
-    setIsApproved(true)
-    onApprove?.(approvedData)
-    toast.success('✅ تم اعتماد البيانات بنجاح - يمكن الآن استخدام جميع الأزرار في النظام', {
-      duration: 4000,
-    })
-  }
-
   const handleDelete = () => {
     if (window.confirm('⚠️ هل أنت متأكد من حذف هذه البيانات؟ سيتم حذف جميع معلومات المعلمين والحصص المرتبطة بهذا الجدول.')) {
       onDelete?.()
@@ -93,28 +80,6 @@ export function TeacherDataTable({ scheduleData, onApprove, onDelete }: TeacherD
             </CardDescription>
           </div>
           <div className="flex items-center gap-3">
-            {!isApproved && (
-              <Button
-                variant="default"
-                size="lg"
-                onClick={handleApprove}
-                className="gap-2 bg-accent hover:bg-accent/90"
-              >
-                <CheckCircle className="w-5 h-5" />
-                اعتماد البيانات
-              </Button>
-            )}
-            {isApproved && (
-              <Button
-                variant="outline"
-                size="lg"
-                disabled
-                className="gap-2 border-accent text-accent"
-              >
-                <CheckCircle className="w-5 h-5" />
-                تم الاعتماد
-              </Button>
-            )}
             <Button
               variant="destructive"
               size="lg"
@@ -128,26 +93,17 @@ export function TeacherDataTable({ scheduleData, onApprove, onDelete }: TeacherD
         </div>
       </CardHeader>
       <CardContent>
-        {!isApproved && (
-          <Alert className="mb-6 bg-amber-50 border-amber-200">
-            <Info className="h-5 w-5 text-amber-600" />
-            <AlertDescription className="text-amber-800">
-              <strong>ملاحظة:</strong> يرجى مراجعة البيانات أدناه والتأكد من صحتها، ثم الضغط على زر "اعتماد البيانات" لتفعيل استخدام هذا الجدول في النظام.
-            </AlertDescription>
-          </Alert>
-        )}
-        
         {isApproved && scheduleData.approvedDate && (
           <Alert className="mb-6 bg-accent/10 border-accent">
             <CheckCircle className="h-5 w-5 text-accent" />
             <AlertDescription>
-              <strong>تم الاعتماد:</strong> تم اعتماد هذه البيانات في {new Date(scheduleData.approvedDate).toLocaleString('ar-SA', {
+              <strong>✓ جدول معتمد:</strong> تم اعتماد هذه البيانات تلقائيًا عند الرفع في {new Date(scheduleData.approvedDate).toLocaleString('ar-SA', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
                 hour: '2-digit',
                 minute: '2-digit'
-              })}
+              })}. يمكنك الآن استخدام جميع أزرار النظام.
             </AlertDescription>
           </Alert>
         )}
