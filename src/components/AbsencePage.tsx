@@ -6,16 +6,18 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { Input } from '@/components/ui/input'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import { ScheduleData, Absence, Teacher } from '@/lib/types'
-import { CalendarBlank, UserCircleMinus, Trash, Broom, BookOpen, GraduationCap, Users, Warning } from '@phosphor-icons/react'
+import { CalendarBlank, UserCircleMinus, Trash, Broom, BookOpen, GraduationCap, Users, Warning, FilePdf, Download } from '@phosphor-icons/react'
 
 type FilterMode = 'all' | 'subject' | 'grade'
 
 export function AbsencePage() {
   const [schedules] = useKV<ScheduleData[]>('schedules', [])
   const [absences, setAbsences] = useKV<Absence[]>('absences', [])
+  const [schoolName, setSchoolName] = useKV<string>('schoolName', '')
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('')
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
@@ -245,15 +247,247 @@ export function AbsencePage() {
     setDeleteAllUnknownDialogOpen(false)
   }
 
+  const handleExportToPDF = () => {
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) {
+      toast.error('تعذر فتح نافذة الطباعة')
+      return
+    }
+
+    const todayDate = new Date(selectedDate).toLocaleDateString('ar-SA', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+
+    let tableRows = ''
+    todayAbsences.forEach((absence, index) => {
+      const teacherName = getTeacherName(absence.teacherId)
+      const substituteName = absence.substituteTeacherId 
+        ? getTeacherName(absence.substituteTeacherId) 
+        : 'لا يوجد'
+      const periodsText = absence.periods.sort((a, b) => a - b).join('، ')
+
+      tableRows += `
+        <tr>
+          <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${index + 1}</td>
+          <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${teacherName}</td>
+          <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${periodsText}</td>
+          <td style="padding: 12px; border: 1px solid #ddd; text-align: right;">${substituteName}</td>
+        </tr>
+      `
+    })
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="ar" dir="rtl">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>جدول الغيابات - ${todayDate}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+        <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: 'Tajawal', Arial, sans-serif;
+            direction: rtl;
+            padding: 40px;
+            background: white;
+          }
+          
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #333;
+            padding-bottom: 20px;
+          }
+          
+          .school-name {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+          }
+          
+          .title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 8px;
+          }
+          
+          .date {
+            font-size: 16px;
+            color: #666;
+          }
+          
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          
+          thead {
+            background: #f5f5f5;
+          }
+          
+          th {
+            padding: 14px;
+            border: 1px solid #ddd;
+            font-weight: 700;
+            text-align: center;
+            background: #e8e8e8;
+            color: #333;
+          }
+          
+          td {
+            padding: 12px;
+            border: 1px solid #ddd;
+          }
+          
+          tr:nth-child(even) {
+            background-color: #fafafa;
+          }
+          
+          .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #ddd;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            line-height: 1.8;
+          }
+          
+          .footer-note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            font-weight: 500;
+            color: #856404;
+          }
+          
+          .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 18px;
+          }
+          
+          @media print {
+            body {
+              padding: 20px;
+            }
+            
+            @page {
+              size: A4;
+              margin: 15mm;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="school-name">${schoolName || 'مدرسة [اسم المدرسة]'}</div>
+          <div class="title">جدول غياب المعلمين والبدلاء</div>
+          <div class="date">${todayDate}</div>
+        </div>
+        
+        ${todayAbsences.length > 0 ? `
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 60px;">م</th>
+                <th style="width: 30%;">المعلم الغائب</th>
+                <th style="width: 25%;">الحصص</th>
+                <th style="width: 30%;">المعلم البديل</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+        ` : `
+          <div class="no-data">
+            لا توجد غيابات مسجلة في هذا التاريخ
+          </div>
+        `}
+        
+        <div class="footer">
+          <div class="footer-note">
+            ⚠️ الرجاء الالتزام بجدول الحصص وعدم التأخير عن المواعيد المحددة
+          </div>
+          <div>
+            تم الإصدار بتاريخ: ${new Date().toLocaleDateString('ar-SA', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </div>
+        </div>
+        
+        <script>
+          window.onload = function() {
+            window.print();
+          }
+        </script>
+      </body>
+      </html>
+    `
+
+    printWindow.document.write(htmlContent)
+    printWindow.document.close()
+  }
+
   const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس']
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-2">غياب المعلمين</h1>
-        <p className="text-muted-foreground mb-8">
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-3xl font-bold">غياب المعلمين</h1>
+          {todayAbsences.length > 0 && (
+            <Button
+              onClick={handleExportToPDF}
+              variant="default"
+              className="gap-2"
+            >
+              <FilePdf className="w-5 h-5" weight="fill" />
+              تصدير PDF
+            </Button>
+          )}
+        </div>
+        <p className="text-muted-foreground mb-6">
           تسجيل غياب المعلمين وتعيين البدلاء
         </p>
+
+        <Card className="mb-6 border-primary/20 bg-primary/5">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-3">
+              <Label className="text-sm font-medium whitespace-nowrap">اسم المدرسة:</Label>
+              <Input
+                type="text"
+                value={schoolName}
+                onChange={(e) => setSchoolName(e.target.value)}
+                placeholder="أدخل اسم المدرسة (سيظهر في تصدير PDF)"
+                className="flex-1 bg-background"
+              />
+            </div>
+          </CardContent>
+        </Card>
 
         {approvedSchedules.length === 0 ? (
           <Card className="border-amber-500/50 bg-amber-50/50">
@@ -343,8 +577,18 @@ export function AbsencePage() {
                 
                 {selectedTeacherId && selectedPeriods.length > 0 && (
                   <div className="space-y-2 mb-3">
-                    <Label className="text-xs text-muted-foreground">تصفية ذكية للمعلمين المتاحين:</Label>
+                    <Label className="text-xs text-muted-foreground">اختر طريقة التصفية لاختيار المعلم البديل:</Label>
                     <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant={filterMode === 'all' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setFilterMode('all')}
+                        className="flex-1 gap-2"
+                      >
+                        <Users className="w-4 h-4" />
+                        الجدول العام
+                      </Button>
                       <Button
                         type="button"
                         variant={filterMode === 'subject' ? 'default' : 'outline'}
@@ -353,7 +597,7 @@ export function AbsencePage() {
                         className="flex-1 gap-2"
                       >
                         <BookOpen className="w-4 h-4" />
-                        📘 حسب المادة
+                        نفس المادة
                       </Button>
                       <Button
                         type="button"
@@ -363,32 +607,22 @@ export function AbsencePage() {
                         className="flex-1 gap-2"
                       >
                         <GraduationCap className="w-4 h-4" />
-                        🏫 حسب الصف
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={filterMode === 'all' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setFilterMode('all')}
-                        className="flex-1 gap-2"
-                      >
-                        <Users className="w-4 h-4" />
-                        📋 الجدول العام
+                        نفس الصف
                       </Button>
                     </div>
+                    {filterMode === 'all' && (
+                      <div className="text-xs text-muted-foreground bg-muted px-3 py-2 rounded-md">
+                        📋 عرض جميع المعلمين المتاحين في الجدول العام
+                      </div>
+                    )}
                     {filterMode === 'subject' && getTeacherById(selectedTeacherId) && (
                       <div className="text-xs text-muted-foreground bg-muted px-3 py-2 rounded-md">
-                        📘 عرض المعلمين الذين يدرّسون: <span className="font-medium text-foreground">{getTeacherById(selectedTeacherId)?.subject}</span>
+                        📘 عرض المعلمين الذين يدرّسون نفس المادة: <span className="font-medium text-foreground">{getTeacherById(selectedTeacherId)?.subject}</span>
                       </div>
                     )}
                     {filterMode === 'grade' && getAbsentTeacherGrade() && (
                       <div className="text-xs text-muted-foreground bg-muted px-3 py-2 rounded-md">
-                        🏫 عرض المعلمين الذين يدرّسون في: <span className="font-medium text-foreground">{getAbsentTeacherGrade()}</span>
-                      </div>
-                    )}
-                    {filterMode === 'all' && (
-                      <div className="text-xs text-muted-foreground bg-muted px-3 py-2 rounded-md">
-                        📋 عرض جميع المعلمين المتاحين في الجدول
+                        🏫 عرض المعلمين الذين يدرّسون نفس الصف: <span className="font-medium text-foreground">{getAbsentTeacherGrade()}</span>
                       </div>
                     )}
                     <div className="flex items-center justify-between text-xs px-1">
@@ -452,7 +686,7 @@ export function AbsencePage() {
                       ⚠️ جميع المعلمين مشغولون في هذه الحصص
                       {filterMode !== 'all' && (
                         <div className="mt-1 text-xs">
-                          💡 جرب استخدام "📋 الجدول العام" لعرض جميع المعلمين
+                          💡 جرب استخدام "الجدول العام" لعرض جميع المعلمين المتاحين
                         </div>
                       )}
                     </AlertDescription>
