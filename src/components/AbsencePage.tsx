@@ -274,6 +274,15 @@ export function AbsencePage() {
       return
     }
 
+    const isDuplicate = allTeachers.some(
+      (t) => t.name.trim().toLowerCase() === newTeacherName.trim().toLowerCase()
+    )
+
+    if (isDuplicate) {
+      toast.error('هذا المعلم موجود بالفعل في النظام')
+      return
+    }
+
     const newTeacher: Teacher = {
       id: `custom-teacher-${Date.now()}`,
       name: newTeacherName.trim(),
@@ -282,7 +291,7 @@ export function AbsencePage() {
     }
 
     setCustomTeachers((current) => [...(current || []), newTeacher])
-    toast.success(`تم إضافة المعلم ${newTeacher.name} بنجاح`)
+    toast.success(`تم إضافة المعلم "${newTeacher.name}" بنجاح`)
     setNewTeacherName('')
     setNewTeacherSubject('')
     setAddTeacherDialogOpen(false)
@@ -619,31 +628,52 @@ export function AbsencePage() {
                     className="gap-2 h-8"
                   >
                     <UserPlus className="w-4 h-4" />
-                    إضافة معلم غائب
+                    إضافة معلم خارجي
                   </Button>
                 </div>
                 <Select value={selectedTeacherId} onValueChange={setSelectedTeacherId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="اختر المعلم" />
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="اختر المعلم الغائب من القائمة" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {allTeachers.map((teacher) => {
-                      const isCustom = teacher.id.startsWith('custom-teacher-')
-                      return (
-                        <SelectItem key={teacher.id} value={teacher.id}>
-                          <div className="flex items-center justify-between w-full gap-2">
-                            <span>{teacher.name} - {teacher.subject}</span>
-                            {isCustom && (
-                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                                مُضاف
-                              </Badge>
-                            )}
-                          </div>
-                        </SelectItem>
-                      )
-                    })}
+                  <SelectContent className="max-h-[300px]">
+                    {allTeachers.length === 0 ? (
+                      <SelectItem value="no-teachers" disabled>
+                        لا يوجد معلمين في النظام
+                      </SelectItem>
+                    ) : (
+                      allTeachers
+                        .sort((a, b) => {
+                          if (a.id.startsWith('custom-teacher-') && !b.id.startsWith('custom-teacher-')) return 1
+                          if (!a.id.startsWith('custom-teacher-') && b.id.startsWith('custom-teacher-')) return -1
+                          return a.name.localeCompare(b.name, 'ar')
+                        })
+                        .map((teacher) => {
+                          const isCustom = teacher.id.startsWith('custom-teacher-')
+                          return (
+                            <SelectItem key={teacher.id} value={teacher.id}>
+                              <div className="flex items-center justify-between w-full gap-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">{teacher.name}</span>
+                                  <span className="text-muted-foreground text-sm">({teacher.subject})</span>
+                                </div>
+                                {isCustom && (
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
+                                    خارجي
+                                  </Badge>
+                                )}
+                              </div>
+                            </SelectItem>
+                          )
+                        })
+                    )}
                   </SelectContent>
                 </Select>
+                {!selectedTeacherId && (
+                  <div className="text-xs text-muted-foreground bg-blue-50 border border-blue-200 px-3 py-2 rounded-md flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                    <span>اختر المعلم الغائب من القائمة المنسدلة. إذا لم يكن موجوداً، يمكنك إضافته عبر زر "إضافة معلم خارجي"</span>
+                  </div>
+                )}
                 {selectedTeacherSubject && (
                   <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/20 rounded-md">
                     <BookOpen className="w-4 h-4 text-primary" />
@@ -830,17 +860,23 @@ export function AbsencePage() {
             {customTeachers && customTeachers.length > 0 && (
               <Card className="border-primary/20 bg-primary/5">
                 <CardHeader>
-                  <CardTitle className="text-base">المعلمين المُضافين يدوياً</CardTitle>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    المعلمين الخارجيين ({customTeachers.length})
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
                     {customTeachers.map((teacher) => (
                       <div
                         key={teacher.id}
-                        className="flex items-center justify-between p-3 border rounded-lg bg-background"
+                        className="flex items-center justify-between p-3 border rounded-lg bg-background hover:bg-muted/50 transition-colors"
                       >
                         <div>
-                          <p className="font-medium">{teacher.name}</p>
+                          <p className="font-medium flex items-center gap-2">
+                            {teacher.name}
+                            <Badge variant="outline" className="text-[10px]">خارجي</Badge>
+                          </p>
                           <p className="text-sm text-muted-foreground">{teacher.subject}</p>
                         </div>
                         <Button
@@ -998,20 +1034,31 @@ export function AbsencePage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="w-5 h-5" />
-              إضافة معلم غائب
+              إضافة معلم خارجي
             </DialogTitle>
             <DialogDescription>
-              أضف معلماً جديداً غير موجود في الجدول المدرسي
+              أضف معلماً خارجياً (غير موجود في ملف XML) للنظام
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            <Alert className="bg-blue-50 border-blue-200">
+              <AlertDescription className="text-sm text-blue-900">
+                💡 هذه الميزة لإضافة معلمين غائبين غير موجودين في الجدول الأساسي (مثل معلمين بدلاء مؤقتين أو معلمين من مدارس أخرى)
+              </AlertDescription>
+            </Alert>
             <div className="space-y-2">
               <Label htmlFor="teacher-name">اسم المعلم</Label>
               <Input
                 id="teacher-name"
                 value={newTeacherName}
                 onChange={(e) => setNewTeacherName(e.target.value)}
-                placeholder="أدخل اسم المعلم"
+                placeholder="مثال: محمد أحمد"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleAddTeacher()
+                  }
+                }}
               />
             </div>
             <div className="space-y-2">
@@ -1020,7 +1067,13 @@ export function AbsencePage() {
                 id="teacher-subject"
                 value={newTeacherSubject}
                 onChange={(e) => setNewTeacherSubject(e.target.value)}
-                placeholder="أدخل المادة"
+                placeholder="مثال: رياضيات"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleAddTeacher()
+                  }
+                }}
               />
             </div>
           </div>
@@ -1037,7 +1090,7 @@ export function AbsencePage() {
             </Button>
             <Button onClick={handleAddTeacher} className="gap-2">
               <UserPlus className="w-4 h-4" />
-              إضافة
+              إضافة المعلم
             </Button>
           </DialogFooter>
         </DialogContent>
