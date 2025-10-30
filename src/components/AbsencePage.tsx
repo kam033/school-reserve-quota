@@ -6,11 +6,12 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import { ScheduleData, Absence, Teacher } from '@/lib/types'
-import { CalendarBlank, UserCircleMinus, Trash, Broom, BookOpen, GraduationCap, Users, Warning, FilePdf, Download } from '@phosphor-icons/react'
+import { CalendarBlank, UserCircleMinus, Trash, Broom, BookOpen, GraduationCap, Users, Warning, FilePdf, Download, UserPlus } from '@phosphor-icons/react'
 
 type FilterMode = 'all' | 'subject' | 'grade'
 
@@ -18,6 +19,7 @@ export function AbsencePage() {
   const [schedules] = useKV<ScheduleData[]>('schedules', [])
   const [absences, setAbsences] = useKV<Absence[]>('absences', [])
   const [schoolName, setSchoolName] = useKV<string>('schoolName', '')
+  const [customTeachers, setCustomTeachers] = useKV<Teacher[]>('customTeachers', [])
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('')
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
@@ -30,6 +32,11 @@ export function AbsencePage() {
   const [deleteAllUnknownDialogOpen, setDeleteAllUnknownDialogOpen] = useState(false)
   const [absenceToDelete, setAbsenceToDelete] = useState<string | null>(null)
   const [substituteWarning, setSubstituteWarning] = useState<string | null>(null)
+  const [addTeacherDialogOpen, setAddTeacherDialogOpen] = useState(false)
+  const [deleteTeacherDialogOpen, setDeleteTeacherDialogOpen] = useState(false)
+  const [newTeacherName, setNewTeacherName] = useState('')
+  const [newTeacherSubject, setNewTeacherSubject] = useState('')
+  const [teacherToDelete, setTeacherToDelete] = useState<string | null>(null)
 
   const approvedSchedules = useMemo(() => {
     if (!schedules || !Array.isArray(schedules) || schedules.length === 0) return []
@@ -37,9 +44,10 @@ export function AbsencePage() {
   }, [schedules])
 
   const allTeachers = useMemo(() => {
-    if (approvedSchedules.length === 0) return []
-    return approvedSchedules.flatMap((schedule) => schedule.teachers || [])
-  }, [approvedSchedules])
+    if (approvedSchedules.length === 0) return [...(customTeachers || [])]
+    const scheduleTeachers = approvedSchedules.flatMap((schedule) => schedule.teachers || [])
+    return [...scheduleTeachers, ...(customTeachers || [])]
+  }, [approvedSchedules, customTeachers])
 
   function getTeacherName(teacherId: string): string {
     return allTeachers.find((t) => t.id === teacherId)?.name || 'غير معروف'
@@ -245,6 +253,54 @@ export function AbsencePage() {
     )
     toast.success(`تم حذف ${count} سجل غير معروف بنجاح`)
     setDeleteAllUnknownDialogOpen(false)
+  }
+
+  const handleAddTeacher = () => {
+    if (!newTeacherName.trim()) {
+      toast.error('يرجى إدخال اسم المعلم')
+      return
+    }
+    if (!newTeacherSubject.trim()) {
+      toast.error('يرجى إدخال مادة المعلم')
+      return
+    }
+
+    const newTeacher: Teacher = {
+      id: `custom-teacher-${Date.now()}`,
+      name: newTeacherName.trim(),
+      subject: newTeacherSubject.trim(),
+      schoolId: 'school-1',
+    }
+
+    setCustomTeachers((current) => [...(current || []), newTeacher])
+    toast.success(`تم إضافة المعلم ${newTeacher.name} بنجاح`)
+    setNewTeacherName('')
+    setNewTeacherSubject('')
+    setAddTeacherDialogOpen(false)
+  }
+
+  const handleDeleteTeacher = (teacherId: string) => {
+    const teacher = customTeachers?.find((t) => t.id === teacherId)
+    if (!teacher) return
+
+    const hasAbsences = absences?.some((absence) => 
+      absence.teacherId === teacherId || absence.substituteTeacherId === teacherId
+    )
+
+    if (hasAbsences) {
+      toast.error('لا يمكن حذف المعلم لأنه مرتبط بسجلات غياب')
+      return
+    }
+
+    setCustomTeachers((current) => (current || []).filter((t) => t.id !== teacherId))
+    toast.success(`تم حذف المعلم ${teacher.name} بنجاح`)
+    setDeleteTeacherDialogOpen(false)
+    setTeacherToDelete(null)
+  }
+
+  const handleDeleteTeacherClick = (teacherId: string) => {
+    setTeacherToDelete(teacherId)
+    setDeleteTeacherDialogOpen(true)
   }
 
   const handleExportToPDF = () => {
@@ -544,17 +600,39 @@ export function AbsencePage() {
               </div>
 
               <div className="space-y-2">
-                <Label>المعلم الغائب</Label>
+                <div className="flex items-center justify-between">
+                  <Label>المعلم الغائب</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setAddTeacherDialogOpen(true)}
+                    className="gap-2 h-8"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    إضافة معلم غائب
+                  </Button>
+                </div>
                 <Select value={selectedTeacherId} onValueChange={setSelectedTeacherId}>
                   <SelectTrigger>
                     <SelectValue placeholder="اختر المعلم" />
                   </SelectTrigger>
                   <SelectContent>
-                    {allTeachers.map((teacher) => (
-                      <SelectItem key={teacher.id} value={teacher.id}>
-                        {teacher.name} - {teacher.subject}
-                      </SelectItem>
-                    ))}
+                    {allTeachers.map((teacher) => {
+                      const isCustom = teacher.id.startsWith('custom-teacher-')
+                      return (
+                        <SelectItem key={teacher.id} value={teacher.id}>
+                          <div className="flex items-center justify-between w-full gap-2">
+                            <span>{teacher.name} - {teacher.subject}</span>
+                            {isCustom && (
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                مُضاف
+                              </Badge>
+                            )}
+                          </div>
+                        </SelectItem>
+                      )
+                    })}
                   </SelectContent>
                 </Select>
               </div>
@@ -715,6 +793,36 @@ export function AbsencePage() {
           </Card>
 
           <div className="space-y-6">
+            {customTeachers && customTeachers.length > 0 && (
+              <Card className="border-primary/20 bg-primary/5">
+                <CardHeader>
+                  <CardTitle className="text-base">المعلمين المُضافين يدوياً</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {customTeachers.map((teacher) => (
+                      <div
+                        key={teacher.id}
+                        className="flex items-center justify-between p-3 border rounded-lg bg-background"
+                      >
+                        <div>
+                          <p className="font-medium">{teacher.name}</p>
+                          <p className="text-sm text-muted-foreground">{teacher.subject}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteTeacherClick(teacher.id)}
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -846,6 +954,79 @@ export function AbsencePage() {
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
               حذف الكل ({unknownAbsencesCount})
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={addTeacherDialogOpen} onOpenChange={setAddTeacherDialogOpen}>
+        <DialogContent dir="rtl" className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5" />
+              إضافة معلم غائب
+            </DialogTitle>
+            <DialogDescription>
+              أضف معلماً جديداً غير موجود في الجدول المدرسي
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="teacher-name">اسم المعلم</Label>
+              <Input
+                id="teacher-name"
+                value={newTeacherName}
+                onChange={(e) => setNewTeacherName(e.target.value)}
+                placeholder="أدخل اسم المعلم"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="teacher-subject">المادة</Label>
+              <Input
+                id="teacher-subject"
+                value={newTeacherSubject}
+                onChange={(e) => setNewTeacherSubject(e.target.value)}
+                placeholder="أدخل المادة"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setAddTeacherDialogOpen(false)
+                setNewTeacherName('')
+                setNewTeacherSubject('')
+              }}
+            >
+              إلغاء
+            </Button>
+            <Button onClick={handleAddTeacher} className="gap-2">
+              <UserPlus className="w-4 h-4" />
+              إضافة
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={deleteTeacherDialogOpen} onOpenChange={setDeleteTeacherDialogOpen}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>حذف المعلم</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              هل أنت متأكد من حذف هذا المعلم؟
+              <br />
+              <br />
+              لن تتمكن من حذف المعلم إذا كان مرتبطاً بسجلات غياب.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => teacherToDelete && handleDeleteTeacher(teacherToDelete)}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              حذف
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
