@@ -21,6 +21,7 @@ export function AbsencePage() {
   const [schoolName, setSchoolName] = useKV<string>('schoolName', '')
   const [customTeachers, setCustomTeachers] = useKV<Teacher[]>('customTeachers', [])
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('')
+  const [selectedTeacherSubject, setSelectedTeacherSubject] = useState<string>('')
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   )
@@ -173,6 +174,14 @@ export function AbsencePage() {
   }
 
   useEffect(() => {
+    if (selectedTeacherId) {
+      const teacher = getTeacherById(selectedTeacherId)
+      if (teacher) {
+        setSelectedTeacherSubject(teacher.subject)
+      }
+    } else {
+      setSelectedTeacherSubject('')
+    }
     setFilterMode('all')
     setSubstituteId('')
     setSubstituteWarning(null)
@@ -635,6 +644,15 @@ export function AbsencePage() {
                     })}
                   </SelectContent>
                 </Select>
+                {selectedTeacherSubject && (
+                  <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/20 rounded-md">
+                    <BookOpen className="w-4 h-4 text-primary" />
+                    <span className="text-sm">
+                      <span className="text-muted-foreground">المادة: </span>
+                      <span className="font-medium text-foreground">{selectedTeacherSubject}</span>
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
