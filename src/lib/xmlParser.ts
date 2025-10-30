@@ -93,7 +93,6 @@ export function parseXMLFile(xmlContent: string, schoolId: string): ParseResult 
       let id = cleanId(teacherEl.getAttribute('id') || '')
       const name = teacherEl.getAttribute('name') || ''
       const short = teacherEl.getAttribute('short') || ''
-      const gender = teacherEl.getAttribute('gender') || ''
       const color = teacherEl.getAttribute('color') || ''
 
       if (!id || !name) {
@@ -110,10 +109,6 @@ export function parseXMLFile(xmlContent: string, schoolId: string): ParseResult 
         errors.push(`مشكلة في الترميز: "${name}" - يُرجى حفظ الملف بترميز UTF-8 بدون BOM`)
       }
 
-      if (gender && gender.toUpperCase() === 'F') {
-        warnings.push(`المعلم ${name} يحتوي على gender="F". إذا كان ذلك خطأ، يُرجى تغييره إلى "M" أو حذفه.`)
-      }
-
       teacherIds.add(id)
 
       teachers.push({
@@ -123,7 +118,6 @@ export function parseXMLFile(xmlContent: string, schoolId: string): ParseResult 
         short,
         subject: '',
         schoolId,
-        gender,
         color,
       })
     })

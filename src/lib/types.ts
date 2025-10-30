@@ -16,7 +16,6 @@ export interface Teacher {
   short?: string
   subject: string
   schoolId: string
-  gender?: string
   color?: string
 }
 

@@ -207,7 +207,7 @@ export function ScheduleViewPage() {
                         <TableHead className="text-right">الرقم</TableHead>
                         <TableHead className="text-right">الاسم</TableHead>
                         <TableHead className="text-right">الاسم المختصر</TableHead>
-                        <TableHead className="text-right">الجنس</TableHead>
+                        <TableHead className="text-right">المادة</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -218,13 +218,7 @@ export function ScheduleViewPage() {
                             <TableCell className="font-medium">{teacher.name}</TableCell>
                             <TableCell>{teacher.short || '-'}</TableCell>
                             <TableCell>
-                              {teacher.gender === 'M' ? (
-                                <Badge variant="secondary">ذكر</Badge>
-                              ) : teacher.gender === 'F' ? (
-                                <Badge variant="outline">أنثى</Badge>
-                              ) : (
-                                '-'
-                              )}
+                              <span className="text-primary">{teacher.subject || 'غير محدد'}</span>
                             </TableCell>
                           </TableRow>
                         ))
