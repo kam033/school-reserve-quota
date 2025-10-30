@@ -1,14 +1,17 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import { ScheduleData, Absence, Teacher } from '@/lib/types'
-import { CalendarBlank, UserCircleMinus, Trash, Broom } from '@phosphor-icons/react'
+import { CalendarBlank, UserCircleMinus, Trash, Broom, BookOpen, GraduationCap, Users, Warning } from '@phosphor-icons/react'
+
+type FilterMode = 'all' | 'subject' | 'grade'
 
 export function AbsencePage() {
   const [schedules] = useKV<ScheduleData[]>('schedules', [])
@@ -20,9 +23,11 @@ export function AbsencePage() {
   const [selectedDay, setSelectedDay] = useState<string>('الأحد')
   const [selectedPeriods, setSelectedPeriods] = useState<number[]>([])
   const [substituteId, setSubstituteId] = useState<string>('')
+  const [filterMode, setFilterMode] = useState<FilterMode>('all')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteAllUnknownDialogOpen, setDeleteAllUnknownDialogOpen] = useState(false)
   const [absenceToDelete, setAbsenceToDelete] = useState<string | null>(null)
+  const [substituteWarning, setSubstituteWarning] = useState<string | null>(null)
 
   const approvedSchedules = useMemo(() => {
     if (!schedules || !Array.isArray(schedules) || schedules.length === 0) return []
@@ -37,6 +42,77 @@ export function AbsencePage() {
   function getTeacherName(teacherId: string): string {
     return allTeachers.find((t) => t.id === teacherId)?.name || 'غير معروف'
   }
+
+  function getTeacherById(teacherId: string): Teacher | undefined {
+    return allTeachers.find((t) => t.id === teacherId)
+  }
+
+  function getAbsentTeacherGrade(): string | null {
+    if (!selectedTeacherId || approvedSchedules.length === 0 || selectedPeriods.length === 0) return null
+    
+    for (const schedule of approvedSchedules) {
+      if (!schedule.periods || !Array.isArray(schedule.periods)) continue
+      
+      for (const period of schedule.periods) {
+        if (period.teacherId === selectedTeacherId && 
+            period.day === selectedDay && 
+            selectedPeriods.includes(period.periodNumber)) {
+          return period.className || null
+        }
+      }
+    }
+    return null
+  }
+
+  function checkAdjacentPeriods(teacherId: string): { hasBefore: boolean; hasAfter: boolean; details: string[] } {
+    const result = { hasBefore: false, hasAfter: false, details: [] as string[] }
+    
+    if (!teacherId || approvedSchedules.length === 0 || selectedPeriods.length === 0) {
+      return result
+    }
+
+    const minPeriod = Math.min(...selectedPeriods)
+    const maxPeriod = Math.max(...selectedPeriods)
+
+    approvedSchedules.forEach((schedule) => {
+      if (!schedule.periods || !Array.isArray(schedule.periods)) return
+      
+      schedule.periods.forEach((period) => {
+        if (period.teacherId === teacherId && period.day === selectedDay) {
+          if (period.periodNumber === minPeriod - 1) {
+            result.hasBefore = true
+            result.details.push(`الحصة ${period.periodNumber} (قبل)`)
+          }
+          if (period.periodNumber === maxPeriod + 1) {
+            result.hasAfter = true
+            result.details.push(`الحصة ${period.periodNumber} (بعد)`)
+          }
+        }
+      })
+    })
+
+    return result
+  }
+
+  useEffect(() => {
+    if (!substituteId) {
+      setSubstituteWarning(null)
+      return
+    }
+
+    const adjacentCheck = checkAdjacentPeriods(substituteId)
+    
+    if (adjacentCheck.hasBefore || adjacentCheck.hasAfter) {
+      const teacher = getTeacherById(substituteId)
+      const teacherName = teacher?.name || 'المعلم'
+      const periodDetails = adjacentCheck.details.join(' و ')
+      setSubstituteWarning(
+        `⚠️ تنبيه: ${teacherName} لديه حصة في ${periodDetails}، يُفضَّل اختيار معلم آخر لضمان راحة المعلم.`
+      )
+    } else {
+      setSubstituteWarning(null)
+    }
+  }, [substituteId, selectedPeriods, selectedDay, approvedSchedules])
 
   const availableSubstitutes = useMemo(() => {
     if (approvedSchedules.length === 0 || !selectedDay || selectedPeriods.length === 0) return []
@@ -53,10 +129,30 @@ export function AbsencePage() {
       }
     })
 
-    return allTeachers.filter((teacher) => 
+    let filteredTeachers = allTeachers.filter((teacher) => 
       teacher.id !== selectedTeacherId && !busyTeacherIds.has(teacher.id)
     )
-  }, [approvedSchedules, selectedDay, selectedPeriods, allTeachers, selectedTeacherId])
+
+    const absentTeacher = getTeacherById(selectedTeacherId)
+    const absentTeacherGrade = getAbsentTeacherGrade()
+
+    if (filterMode === 'subject' && absentTeacher) {
+      filteredTeachers = filteredTeachers.filter(
+        (teacher) => teacher.subject === absentTeacher.subject
+      )
+    } else if (filterMode === 'grade' && absentTeacherGrade) {
+      filteredTeachers = filteredTeachers.filter((teacher) => {
+        return approvedSchedules.some((schedule) => 
+          schedule.periods?.some((period) => 
+            period.teacherId === teacher.id && 
+            period.className === absentTeacherGrade
+          )
+        )
+      })
+    }
+
+    return filteredTeachers
+  }, [approvedSchedules, selectedDay, selectedPeriods, allTeachers, selectedTeacherId, filterMode])
 
   const handleTogglePeriod = (period: number) => {
     setSelectedPeriods((current) =>
@@ -65,6 +161,12 @@ export function AbsencePage() {
         : [...current, period]
     )
   }
+
+  useEffect(() => {
+    setFilterMode('all')
+    setSubstituteId('')
+    setSubstituteWarning(null)
+  }, [selectedTeacherId])
 
   const handleRecordAbsence = () => {
     if (!selectedTeacherId) {
@@ -94,6 +196,8 @@ export function AbsencePage() {
     setSelectedTeacherId('')
     setSelectedPeriods([])
     setSubstituteId('')
+    setFilterMode('all')
+    setSubstituteWarning(null)
   }
 
   const todayAbsences = useMemo(() => {
@@ -236,6 +340,42 @@ export function AbsencePage() {
 
               <div className="space-y-2">
                 <Label>المعلم البديل (اختياري)</Label>
+                
+                {selectedTeacherId && selectedPeriods.length > 0 && (
+                  <div className="flex gap-2 mb-3">
+                    <Button
+                      type="button"
+                      variant={filterMode === 'subject' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setFilterMode('subject')}
+                      className="flex-1 gap-2"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      حسب المادة
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={filterMode === 'grade' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setFilterMode('grade')}
+                      className="flex-1 gap-2"
+                    >
+                      <GraduationCap className="w-4 h-4" />
+                      حسب الصف
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={filterMode === 'all' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setFilterMode('all')}
+                      className="flex-1 gap-2"
+                    >
+                      <Users className="w-4 h-4" />
+                      الجدول العام
+                    </Button>
+                  </div>
+                )}
+
                 <Select value={substituteId} onValueChange={setSubstituteId}>
                   <SelectTrigger>
                     <SelectValue placeholder="اختر المعلم البديل" />
@@ -254,6 +394,16 @@ export function AbsencePage() {
                     )}
                   </SelectContent>
                 </Select>
+
+                {substituteWarning && (
+                  <Alert className="border-amber-500 bg-amber-50">
+                    <Warning className="h-4 w-4 text-amber-600" />
+                    <AlertDescription className="text-sm text-amber-800">
+                      {substituteWarning}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 {selectedPeriods.length > 0 && availableSubstitutes.length === 0 && (
                   <p className="text-sm text-destructive">
                     جميع المعلمين مشغولون في هذه الحصص
