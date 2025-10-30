@@ -181,8 +181,8 @@ export function AbsencePage() {
       }
     } else {
       setSelectedTeacherSubject('')
+      setFilterMode('all')
     }
-    setFilterMode('all')
     setSubstituteId('')
     setSubstituteWarning(null)
   }, [selectedTeacherId])
@@ -681,9 +681,23 @@ export function AbsencePage() {
                   )}
                 </div>
                 
+                {!selectedTeacherId && (
+                  <div className="text-xs text-muted-foreground bg-amber-50 border border-amber-200 px-3 py-2 rounded-md flex items-center gap-2">
+                    <Warning className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                    <span>يُرجى اختيار المعلم الغائب أولاً لتفعيل خيارات المعلم البديل</span>
+                  </div>
+                )}
+                
+                {selectedTeacherId && selectedPeriods.length === 0 && (
+                  <div className="text-xs text-muted-foreground bg-amber-50 border border-amber-200 px-3 py-2 rounded-md flex items-center gap-2">
+                    <Warning className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                    <span>يُرجى اختيار الحصص أولاً لعرض المعلمين المتفرغين</span>
+                  </div>
+                )}
+                
                 {selectedTeacherId && selectedPeriods.length > 0 && (
                   <div className="space-y-2 mb-3">
-                    <Label className="text-xs text-muted-foreground">اختر طريقة التصفية لاختيار المعلم البديل:</Label>
+                    <Label className="text-xs text-muted-foreground">📋 اختر طريقة التصفية لاختيار المعلم البديل:</Label>
                     <div className="flex gap-2">
                       <Button
                         type="button"
@@ -701,6 +715,7 @@ export function AbsencePage() {
                         size="sm"
                         onClick={() => setFilterMode('subject')}
                         className="flex-1 gap-2"
+                        disabled={!getTeacherById(selectedTeacherId)?.subject}
                       >
                         <BookOpen className="w-4 h-4" />
                         نفس المادة
@@ -711,23 +726,24 @@ export function AbsencePage() {
                         size="sm"
                         onClick={() => setFilterMode('grade')}
                         className="flex-1 gap-2"
+                        disabled={!getAbsentTeacherGrade()}
                       >
                         <GraduationCap className="w-4 h-4" />
                         نفس الصف
                       </Button>
                     </div>
                     {filterMode === 'all' && (
-                      <div className="text-xs text-muted-foreground bg-muted px-3 py-2 rounded-md">
+                      <div className="text-xs text-muted-foreground bg-blue-50 border border-blue-200 px-3 py-2 rounded-md">
                         📋 عرض جميع المعلمين المتاحين (المتفرغين) في الجدول العام
                       </div>
                     )}
                     {filterMode === 'subject' && getTeacherById(selectedTeacherId) && (
-                      <div className="text-xs text-muted-foreground bg-muted px-3 py-2 rounded-md">
+                      <div className="text-xs text-muted-foreground bg-green-50 border border-green-200 px-3 py-2 rounded-md">
                         📘 عرض المعلمين المتفرغين في نفس المادة: <span className="font-medium text-foreground">{getTeacherById(selectedTeacherId)?.subject}</span>
                       </div>
                     )}
                     {filterMode === 'grade' && getAbsentTeacherGrade() && (
-                      <div className="text-xs text-muted-foreground bg-muted px-3 py-2 rounded-md">
+                      <div className="text-xs text-muted-foreground bg-purple-50 border border-purple-200 px-3 py-2 rounded-md">
                         🏫 عرض المعلمين المتفرغين في نفس الصف: <span className="font-medium text-foreground">{getAbsentTeacherGrade()}</span>
                       </div>
                     )}
@@ -748,9 +764,9 @@ export function AbsencePage() {
                   </div>
                 )}
 
-                <Select value={substituteId} onValueChange={setSubstituteId}>
+                <Select value={substituteId} onValueChange={setSubstituteId} disabled={!selectedTeacherId || selectedPeriods.length === 0}>
                   <SelectTrigger>
-                    <SelectValue placeholder="اختر المعلم البديل" />
+                    <SelectValue placeholder={!selectedTeacherId ? "اختر المعلم الغائب أولاً" : selectedPeriods.length === 0 ? "اختر الحصص أولاً" : "اختر المعلم البديل"} />
                   </SelectTrigger>
                   <SelectContent>
                     {availableSubstitutes.length > 0 ? (
