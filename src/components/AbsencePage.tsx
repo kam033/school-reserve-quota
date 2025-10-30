@@ -21,12 +21,12 @@ export function AbsencePage() {
   const [substituteId, setSubstituteId] = useState<string>('')
 
   const allTeachers = useMemo(() => {
-    if (!schedules || !Array.isArray(schedules)) return []
+    if (!schedules || !Array.isArray(schedules) || schedules.length === 0) return []
     return schedules.flatMap((schedule) => schedule.teachers || [])
   }, [schedules])
 
   const availableSubstitutes = useMemo(() => {
-    if (!schedules || !Array.isArray(schedules) || !selectedDay || selectedPeriods.length === 0) return []
+    if (!schedules || !Array.isArray(schedules) || schedules.length === 0 || !selectedDay || selectedPeriods.length === 0) return []
     
     const busyTeacherIds = new Set<string>()
     
@@ -84,7 +84,7 @@ export function AbsencePage() {
   }
 
   const todayAbsences = useMemo(() => {
-    if (!absences) return []
+    if (!absences || !Array.isArray(absences)) return []
     return absences.filter((a) => a.date === selectedDate)
   }, [absences, selectedDate])
 

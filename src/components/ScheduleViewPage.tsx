@@ -10,7 +10,7 @@ import { UsersThree, Books, Door, Calendar, Clock } from '@phosphor-icons/react'
 export function ScheduleViewPage() {
   const [schedules] = useKV<ScheduleData[]>('schedules', [])
 
-  if (!schedules || schedules.length === 0) {
+  if (!schedules || !Array.isArray(schedules) || schedules.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center" dir="rtl">
         <Card className="max-w-md">

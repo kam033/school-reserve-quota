@@ -85,8 +85,10 @@ export function XMLUploadPage() {
       if (result.success && result.data) {
         setSchedules((current) => [...(current || []), result.data!])
         setLastUploadedSchedule(result.data)
+        const teacherCount = result.data.teachers?.length || 0
+        const scheduleCount = result.data.schedules?.length || 0
         toast.success(
-          `✅ تم تحويل الملف ورفعه بنجاح! تم استخراج ${result.data.teachers.length} معلم و ${result.data.schedules?.length || 0} حصة`
+          `✅ تم تحويل الملف ورفعه بنجاح! تم استخراج ${teacherCount} معلم و ${scheduleCount} حصة`
         )
       } else {
         toast.error('❌ فشل رفع الملف. يرجى مراجعة الأخطاء')
@@ -283,7 +285,7 @@ export function XMLUploadPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {schedules && schedules.length > 0 ? (
+                  {schedules && Array.isArray(schedules) && schedules.length > 0 ? (
                     <div className="space-y-3">
                       {schedules.map((schedule, i) => (
                         <div
@@ -306,9 +308,9 @@ export function XMLUploadPage() {
                               )}
                             </div>
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <span>👥 {schedule.teachers.length} معلم</span>
-                              <span>📚 {schedule.subjects.length} مادة</span>
-                              <span>🏫 {schedule.classes.length} فصل</span>
+                              <span>👥 {schedule.teachers?.length || 0} معلم</span>
+                              <span>📚 {schedule.subjects?.length || 0} مادة</span>
+                              <span>🏫 {schedule.classes?.length || 0} فصل</span>
                               <span>📅 {schedule.schedules?.length || 0} حصة</span>
                             </div>
                           </div>

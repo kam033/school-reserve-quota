@@ -10,7 +10,7 @@ export function TeacherSchedulesPage() {
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('')
 
   const allTeachers = useMemo(() => {
-    if (!schedules || !Array.isArray(schedules)) return []
+    if (!schedules || !Array.isArray(schedules) || schedules.length === 0) return []
     return schedules.flatMap((schedule) => schedule.teachers || [])
   }, [schedules])
 
@@ -19,7 +19,7 @@ export function TeacherSchedulesPage() {
   }, [allTeachers, selectedTeacherId])
 
   const teacherPeriods = useMemo(() => {
-    if (!schedules || !selectedTeacherId || !Array.isArray(schedules)) return []
+    if (!schedules || !Array.isArray(schedules) || !selectedTeacherId || schedules.length === 0) return []
     return schedules
       .flatMap((schedule) => schedule.periods || [])
       .filter((period) => period.teacherId === selectedTeacherId)

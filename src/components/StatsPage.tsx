@@ -10,7 +10,7 @@ export function StatsPage() {
   const [absences] = useKV<Absence[]>('absences', [])
 
   const stats = useMemo(() => {
-    if (!schedules || !Array.isArray(schedules)) {
+    if (!schedules || !Array.isArray(schedules) || schedules.length === 0) {
       return {
         totalTeachers: 0,
         totalSubjects: 0,
@@ -117,7 +117,7 @@ export function StatsPage() {
   ]
 
   const recentAbsences = useMemo(() => {
-    if (!absences || !Array.isArray(absences) || !schedules || !Array.isArray(schedules)) return []
+    if (!absences || !Array.isArray(absences) || absences.length === 0 || !schedules || !Array.isArray(schedules) || schedules.length === 0) return []
     
     const allTeachers = schedules.flatMap((s) => s.teachers || [])
     
