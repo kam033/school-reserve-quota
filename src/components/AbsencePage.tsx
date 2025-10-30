@@ -20,17 +20,22 @@ export function AbsencePage() {
   const [selectedPeriods, setSelectedPeriods] = useState<number[]>([])
   const [substituteId, setSubstituteId] = useState<string>('')
 
-  const allTeachers = useMemo(() => {
+  const approvedSchedules = useMemo(() => {
     if (!schedules || !Array.isArray(schedules) || schedules.length === 0) return []
-    return schedules.flatMap((schedule) => schedule.teachers || [])
+    return schedules.filter((s) => s.approved)
   }, [schedules])
 
+  const allTeachers = useMemo(() => {
+    if (approvedSchedules.length === 0) return []
+    return approvedSchedules.flatMap((schedule) => schedule.teachers || [])
+  }, [approvedSchedules])
+
   const availableSubstitutes = useMemo(() => {
-    if (!schedules || !Array.isArray(schedules) || schedules.length === 0 || !selectedDay || selectedPeriods.length === 0) return []
+    if (approvedSchedules.length === 0 || !selectedDay || selectedPeriods.length === 0) return []
     
     const busyTeacherIds = new Set<string>()
     
-    schedules.forEach((schedule) => {
+    approvedSchedules.forEach((schedule) => {
       if (schedule.periods && Array.isArray(schedule.periods)) {
         schedule.periods.forEach((period) => {
           if (period.day === selectedDay && selectedPeriods.includes(period.periodNumber)) {
@@ -43,7 +48,7 @@ export function AbsencePage() {
     return allTeachers.filter((teacher) => 
       teacher.id !== selectedTeacherId && !busyTeacherIds.has(teacher.id)
     )
-  }, [schedules, selectedDay, selectedPeriods, allTeachers, selectedTeacherId])
+  }, [approvedSchedules, selectedDay, selectedPeriods, allTeachers, selectedTeacherId])
 
   const handleTogglePeriod = (period: number) => {
     setSelectedPeriods((current) =>
@@ -102,7 +107,26 @@ export function AbsencePage() {
           تسجيل غياب المعلمين وتعيين البدلاء
         </p>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {approvedSchedules.length === 0 ? (
+          <Card className="border-amber-500/50 bg-amber-50/50">
+            <CardContent className="py-12">
+              <div className="text-center space-y-3">
+                <p className="text-lg font-medium text-foreground">
+                  ⚠️ لا يوجد جدول معتمد
+                </p>
+                <p className="text-muted-foreground">
+                  يرجى رفع ملف XML واعتماده أولاً من صفحة "تحميل الجدول"
+                </p>
+                <div className="pt-4">
+                  <Button onClick={() => window.history.back()} variant="outline">
+                    العودة للصفحة الرئيسية
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
               <CardTitle>تسجيل غياب جديد</CardTitle>
@@ -250,6 +274,7 @@ export function AbsencePage() {
             </Card>
           </div>
         </div>
+        )}
       </div>
     </div>
   )

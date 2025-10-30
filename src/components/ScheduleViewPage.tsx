@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -10,19 +11,31 @@ import { UsersThree, Books, Door, Calendar, Clock } from '@phosphor-icons/react'
 export function ScheduleViewPage() {
   const [schedules] = useKV<ScheduleData[]>('schedules', [])
 
-  if (!schedules || !Array.isArray(schedules) || schedules.length === 0) {
+  const approvedSchedules = useMemo(() => {
+    if (!schedules || !Array.isArray(schedules) || schedules.length === 0) return []
+    return schedules.filter((s) => s.approved)
+  }, [schedules])
+
+  if (approvedSchedules.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center" dir="rtl">
-        <Card className="max-w-md">
-          <CardContent className="pt-6 text-center">
-            <p className="text-muted-foreground">لا توجد جداول محملة. يرجى رفع ملف XML أولاً.</p>
+        <Card className="max-w-md border-amber-500/50 bg-amber-50/50">
+          <CardContent className="py-12">
+            <div className="text-center space-y-3">
+              <p className="text-lg font-medium text-foreground">
+                ⚠️ لا يوجد جدول معتمد
+              </p>
+              <p className="text-muted-foreground">
+                يرجى رفع ملف XML واعتماده أولاً من صفحة "تحميل الجدول"
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
     )
   }
 
-  const latestSchedule = schedules[schedules.length - 1]
+  const latestSchedule = approvedSchedules[approvedSchedules.length - 1]
 
   const getDayName = (dayID: string): string => {
     if (!latestSchedule.days || !Array.isArray(latestSchedule.days)) return `يوم ${dayID}`

@@ -21,19 +21,24 @@ export function TeacherSchedulesPage() {
   const [schedules] = useKV<ScheduleData[]>('schedules', [])
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('')
 
-  const allTeachers = useMemo(() => {
+  const approvedSchedules = useMemo(() => {
     if (!schedules || !Array.isArray(schedules) || schedules.length === 0) return []
-    return schedules.flatMap((schedule) => schedule.teachers || [])
+    return schedules.filter((s) => s.approved)
   }, [schedules])
+
+  const allTeachers = useMemo(() => {
+    if (approvedSchedules.length === 0) return []
+    return approvedSchedules.flatMap((schedule) => schedule.teachers || [])
+  }, [approvedSchedules])
 
   const selectedTeacher = useMemo(() => {
     return allTeachers.find((t) => t.id === selectedTeacherId)
   }, [allTeachers, selectedTeacherId])
 
   const scheduleData = useMemo(() => {
-    if (!schedules || !Array.isArray(schedules) || schedules.length === 0) return null
-    return schedules[0]
-  }, [schedules])
+    if (approvedSchedules.length === 0) return null
+    return approvedSchedules[approvedSchedules.length - 1]
+  }, [approvedSchedules])
 
   const dayMapping = useMemo(() => {
     if (!scheduleData?.days) return {}
@@ -329,11 +334,21 @@ export function TeacherSchedulesPage() {
         )}
 
         {!selectedTeacher && allTeachers.length === 0 && (
-          <Card>
+          <Card className="border-amber-500/50 bg-amber-50/50">
             <CardContent className="py-12">
-              <p className="text-center text-muted-foreground text-lg">
-                لم يتم رفع أي جداول بعد. يرجى رفع ملف XML أولاً من صفحة "تحميل الجدول".
-              </p>
+              <div className="text-center space-y-3">
+                <p className="text-lg font-medium text-foreground">
+                  ⚠️ لا يوجد جدول معتمد
+                </p>
+                <p className="text-muted-foreground">
+                  يرجى رفع ملف XML واعتماده أولاً من صفحة "تحميل الجدول"
+                </p>
+                <div className="pt-4">
+                  <Button onClick={() => window.history.back()} variant="outline">
+                    العودة للصفحة الرئيسية
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}

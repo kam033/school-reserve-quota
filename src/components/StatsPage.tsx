@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { useKV } from '@github/spark/hooks'
 import { ScheduleData, Absence } from '@/lib/types'
 import { Users, BookOpen, Clock, CalendarX, CheckCircle, WarningCircle } from '@phosphor-icons/react'
@@ -9,8 +10,13 @@ export function StatsPage() {
   const [schedules] = useKV<ScheduleData[]>('schedules', [])
   const [absences] = useKV<Absence[]>('absences', [])
 
+  const approvedSchedules = useMemo(() => {
+    if (!schedules || !Array.isArray(schedules) || schedules.length === 0) return []
+    return schedules.filter((s) => s.approved)
+  }, [schedules])
+
   const stats = useMemo(() => {
-    if (!schedules || !Array.isArray(schedules) || schedules.length === 0) {
+    if (approvedSchedules.length === 0) {
       return {
         totalTeachers: 0,
         totalSubjects: 0,
@@ -22,8 +28,8 @@ export function StatsPage() {
       }
     }
 
-    const allTeachers = schedules.flatMap((s) => s.teachers || [])
-    const allPeriods = schedules.flatMap((s) => s.periods || [])
+    const allTeachers = approvedSchedules.flatMap((s) => s.teachers || [])
+    const allPeriods = approvedSchedules.flatMap((s) => s.periods || [])
     const uniqueSubjects = new Set(allTeachers.map((t) => t.subject).filter(Boolean))
     
     const today = new Date().toISOString().split('T')[0]
@@ -69,7 +75,7 @@ export function StatsPage() {
       coverageRate,
       warnings,
     }
-  }, [schedules, absences])
+  }, [approvedSchedules, absences])
 
   const statCards = [
     {
@@ -117,9 +123,9 @@ export function StatsPage() {
   ]
 
   const recentAbsences = useMemo(() => {
-    if (!absences || !Array.isArray(absences) || absences.length === 0 || !schedules || !Array.isArray(schedules) || schedules.length === 0) return []
+    if (!absences || !Array.isArray(absences) || absences.length === 0 || approvedSchedules.length === 0) return []
     
-    const allTeachers = schedules.flatMap((s) => s.teachers || [])
+    const allTeachers = approvedSchedules.flatMap((s) => s.teachers || [])
     
     return absences
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -141,8 +147,27 @@ export function StatsPage() {
           نظرة شاملة على البيانات والإحصاءات
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {statCards.map((stat) => (
+        {approvedSchedules.length === 0 ? (
+          <Card className="border-amber-500/50 bg-amber-50/50">
+            <CardContent className="py-12">
+              <div className="text-center space-y-3">
+                <p className="text-lg font-medium text-foreground">
+                  ⚠️ لا يوجد جدول معتمد
+                </p>
+                <p className="text-muted-foreground">
+                  يرجى رفع ملف XML واعتماده أولاً من صفحة "تحميل الجدول"
+                </p>
+                <div className="pt-4">
+                  <Button onClick={() => window.history.back()} variant="outline">
+                    العودة للصفحة الرئيسية
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">{statCards.map((stat) => (
             <Card key={stat.title}>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
@@ -227,6 +252,8 @@ export function StatsPage() {
             )}
           </CardContent>
         </Card>
+          </>
+        )}
       </div>
     </div>
   )

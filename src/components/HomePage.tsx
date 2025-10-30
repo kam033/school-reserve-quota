@@ -5,9 +5,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth'
-import { SignIn, UserPlus, Upload, CalendarBlank, ListBullets, ChartBar, Users } from '@phosphor-icons/react'
+import { useKV } from '@github/spark/hooks'
+import { ScheduleData } from '@/lib/types'
+import { SignIn, UserPlus, Upload, CalendarBlank, ListBullets, ChartBar, Users, WarningCircle } from '@phosphor-icons/react'
 
 interface LoginDialogProps {
   open: boolean
@@ -161,6 +164,10 @@ export function HomePage({ onNavigate }: HomePageProps) {
   const [loginOpen, setLoginOpen] = useState(false)
   const [addUserOpen, setAddUserOpen] = useState(false)
   const { currentUser, logout } = useAuth()
+  const [schedules] = useKV<ScheduleData[]>('schedules', [])
+
+  const hasApprovedSchedule = schedules && Array.isArray(schedules) && schedules.some(s => s.approved)
+  const hasUnapprovedSchedule = schedules && Array.isArray(schedules) && schedules.length > 0 && !hasApprovedSchedule
 
   const menuItems = [
     {
@@ -287,6 +294,31 @@ export function HomePage({ onNavigate }: HomePageProps) {
               </p>
             </CardContent>
           </Card>
+        )}
+
+        {currentUser && hasUnapprovedSchedule && (
+          <Alert className="mt-8 border-amber-500 bg-amber-50/50">
+            <WarningCircle className="h-5 w-5 text-amber-600" />
+            <AlertDescription className="text-amber-900">
+              <p className="font-medium mb-1">⚠️ لديك جدول غير معتمد</p>
+              <p className="text-sm">
+                يرجى الذهاب إلى صفحة "تحميل الجدول" واعتماد البيانات حتى تعمل جميع الأزرار بشكل صحيح.
+                الصفحات الأخرى تعرض البيانات المعتمدة فقط.
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {currentUser && !hasApprovedSchedule && schedules && schedules.length === 0 && (
+          <Alert className="mt-8 border-blue-500 bg-blue-50/50">
+            <WarningCircle className="h-5 w-5 text-blue-600" />
+            <AlertDescription className="text-blue-900">
+              <p className="font-medium mb-1">💡 ابدأ باستخدام النظام</p>
+              <p className="text-sm">
+                لم تقم برفع أي جدول بعد. اضغط على "تحميل الجدول" لرفع ملف XML واعتماده.
+              </p>
+            </AlertDescription>
+          </Alert>
         )}
       </div>
 
