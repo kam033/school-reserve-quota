@@ -400,7 +400,7 @@ export function AbsencePage() {
       <body>
         <div class="header">
           <div class="school-name">${schoolName || 'مدرسة [اسم المدرسة]'}</div>
-          <div class="title">جدول غياب المعلمين والبدلاء</div>
+          <div class="title">جدول الحصص الاحتياطية</div>
           <div class="date">${todayDate}</div>
         </div>
         
@@ -464,10 +464,11 @@ export function AbsencePage() {
               <Button
                 onClick={handleExportToPDF}
                 variant="default"
-                className="gap-2"
+                size="lg"
+                className="gap-2 shadow-lg hover:shadow-xl transition-all"
               >
                 <Download className="w-5 h-5" weight="bold" />
-                تحميل PDF
+                تصدير جدول الاحتياطي
               </Button>
             </div>
           )}
