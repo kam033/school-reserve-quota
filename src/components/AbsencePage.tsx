@@ -109,7 +109,7 @@ export function AbsencePage() {
       const teacherName = teacher?.name || 'المعلم'
       const periodDetails = adjacentCheck.details.join(' و ')
       setSubstituteWarning(
-        `⚠️ تنبيه: ${teacherName} لديه حصة في ${periodDetails}، يُفضَّل اختيار معلم آخر لضمان راحة المعلم.`
+        `⚠️ تنبيه: المعلم ${teacherName} لديه حصة في ${periodDetails} (قبل أو بعد الحصة المختارة)، يُفضَّل اختيار معلم آخر لضمان راحة المعلم وعدم الإرهاق.`
       )
     } else {
       setSubstituteWarning(null)
@@ -460,14 +460,16 @@ export function AbsencePage() {
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-3xl font-bold">غياب المعلمين</h1>
           {todayAbsences.length > 0 && (
-            <Button
-              onClick={handleExportToPDF}
-              variant="default"
-              className="gap-2"
-            >
-              <FilePdf className="w-5 h-5" weight="fill" />
-              تصدير PDF
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleExportToPDF}
+                variant="default"
+                className="gap-2"
+              >
+                <Download className="w-5 h-5" weight="bold" />
+                تحميل PDF
+              </Button>
+            </div>
           )}
         </div>
         <p className="text-muted-foreground mb-6">
@@ -573,7 +575,14 @@ export function AbsencePage() {
               </div>
 
               <div className="space-y-2">
-                <Label>المعلم البديل (اختياري)</Label>
+                <div className="flex items-center justify-between">
+                  <Label>المعلم البديل (اختياري)</Label>
+                  {selectedPeriods.length > 0 && availableSubstitutes.length > 0 && (
+                    <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
+                      ✓ متفرغون فقط
+                    </Badge>
+                  )}
+                </div>
                 
                 {selectedTeacherId && selectedPeriods.length > 0 && (
                   <div className="space-y-2 mb-3">
@@ -612,28 +621,31 @@ export function AbsencePage() {
                     </div>
                     {filterMode === 'all' && (
                       <div className="text-xs text-muted-foreground bg-muted px-3 py-2 rounded-md">
-                        📋 عرض جميع المعلمين المتاحين في الجدول العام
+                        📋 عرض جميع المعلمين المتاحين (المتفرغين) في الجدول العام
                       </div>
                     )}
                     {filterMode === 'subject' && getTeacherById(selectedTeacherId) && (
                       <div className="text-xs text-muted-foreground bg-muted px-3 py-2 rounded-md">
-                        📘 عرض المعلمين الذين يدرّسون نفس المادة: <span className="font-medium text-foreground">{getTeacherById(selectedTeacherId)?.subject}</span>
+                        📘 عرض المعلمين المتفرغين في نفس المادة: <span className="font-medium text-foreground">{getTeacherById(selectedTeacherId)?.subject}</span>
                       </div>
                     )}
                     {filterMode === 'grade' && getAbsentTeacherGrade() && (
                       <div className="text-xs text-muted-foreground bg-muted px-3 py-2 rounded-md">
-                        🏫 عرض المعلمين الذين يدرّسون نفس الصف: <span className="font-medium text-foreground">{getAbsentTeacherGrade()}</span>
+                        🏫 عرض المعلمين المتفرغين في نفس الصف: <span className="font-medium text-foreground">{getAbsentTeacherGrade()}</span>
                       </div>
                     )}
                     <div className="flex items-center justify-between text-xs px-1">
                       <span className="text-muted-foreground">
                         {availableSubstitutes.length > 0 ? (
                           <>
-                            <span className="font-medium text-primary">{availableSubstitutes.length}</span> معلم متاح
+                            <span className="font-medium text-primary">{availableSubstitutes.length}</span> معلم متفرغ
                           </>
                         ) : (
-                          <span className="text-destructive">لا يوجد معلمين متاحين</span>
+                          <span className="text-destructive">لا يوجد معلمين متفرغين</span>
                         )}
+                      </span>
+                      <span className="text-muted-foreground text-[10px]">
+                        ✓ بدون حصص في نفس الوقت
                       </span>
                     </div>
                   </div>
@@ -683,10 +695,10 @@ export function AbsencePage() {
                 {selectedPeriods.length > 0 && availableSubstitutes.length === 0 && selectedTeacherId && (
                   <Alert className="border-destructive/50 bg-destructive/5">
                     <AlertDescription className="text-sm text-destructive">
-                      ⚠️ جميع المعلمين مشغولون في هذه الحصص
+                      ⚠️ جميع المعلمين مشغولون في هذه الحصص (لا يوجد معلمين متفرغين)
                       {filterMode !== 'all' && (
                         <div className="mt-1 text-xs">
-                          💡 جرب استخدام "الجدول العام" لعرض جميع المعلمين المتاحين
+                          💡 جرب استخدام "الجدول العام" لعرض جميع المعلمين المتفرغين
                         </div>
                       )}
                     </AlertDescription>
