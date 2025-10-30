@@ -342,37 +342,66 @@ export function AbsencePage() {
                 <Label>المعلم البديل (اختياري)</Label>
                 
                 {selectedTeacherId && selectedPeriods.length > 0 && (
-                  <div className="flex gap-2 mb-3">
-                    <Button
-                      type="button"
-                      variant={filterMode === 'subject' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setFilterMode('subject')}
-                      className="flex-1 gap-2"
-                    >
-                      <BookOpen className="w-4 h-4" />
-                      حسب المادة
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={filterMode === 'grade' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setFilterMode('grade')}
-                      className="flex-1 gap-2"
-                    >
-                      <GraduationCap className="w-4 h-4" />
-                      حسب الصف
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={filterMode === 'all' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setFilterMode('all')}
-                      className="flex-1 gap-2"
-                    >
-                      <Users className="w-4 h-4" />
-                      الجدول العام
-                    </Button>
+                  <div className="space-y-2 mb-3">
+                    <Label className="text-xs text-muted-foreground">تصفية ذكية للمعلمين المتاحين:</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant={filterMode === 'subject' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setFilterMode('subject')}
+                        className="flex-1 gap-2"
+                      >
+                        <BookOpen className="w-4 h-4" />
+                        📘 حسب المادة
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={filterMode === 'grade' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setFilterMode('grade')}
+                        className="flex-1 gap-2"
+                      >
+                        <GraduationCap className="w-4 h-4" />
+                        🏫 حسب الصف
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={filterMode === 'all' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setFilterMode('all')}
+                        className="flex-1 gap-2"
+                      >
+                        <Users className="w-4 h-4" />
+                        📋 الجدول العام
+                      </Button>
+                    </div>
+                    {filterMode === 'subject' && getTeacherById(selectedTeacherId) && (
+                      <div className="text-xs text-muted-foreground bg-muted px-3 py-2 rounded-md">
+                        📘 عرض المعلمين الذين يدرّسون: <span className="font-medium text-foreground">{getTeacherById(selectedTeacherId)?.subject}</span>
+                      </div>
+                    )}
+                    {filterMode === 'grade' && getAbsentTeacherGrade() && (
+                      <div className="text-xs text-muted-foreground bg-muted px-3 py-2 rounded-md">
+                        🏫 عرض المعلمين الذين يدرّسون في: <span className="font-medium text-foreground">{getAbsentTeacherGrade()}</span>
+                      </div>
+                    )}
+                    {filterMode === 'all' && (
+                      <div className="text-xs text-muted-foreground bg-muted px-3 py-2 rounded-md">
+                        📋 عرض جميع المعلمين المتاحين في الجدول
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between text-xs px-1">
+                      <span className="text-muted-foreground">
+                        {availableSubstitutes.length > 0 ? (
+                          <>
+                            <span className="font-medium text-primary">{availableSubstitutes.length}</span> معلم متاح
+                          </>
+                        ) : (
+                          <span className="text-destructive">لا يوجد معلمين متاحين</span>
+                        )}
+                      </span>
+                    </div>
                   </div>
                 )}
 
@@ -382,11 +411,21 @@ export function AbsencePage() {
                   </SelectTrigger>
                   <SelectContent>
                     {availableSubstitutes.length > 0 ? (
-                      availableSubstitutes.map((teacher) => (
-                        <SelectItem key={teacher.id} value={teacher.id}>
-                          {teacher.name} - {teacher.subject}
-                        </SelectItem>
-                      ))
+                      availableSubstitutes.map((teacher) => {
+                        const adjacentCheck = checkAdjacentPeriods(teacher.id)
+                        const hasAdjacent = adjacentCheck.hasBefore || adjacentCheck.hasAfter
+                        
+                        return (
+                          <SelectItem key={teacher.id} value={teacher.id}>
+                            <div className="flex items-center justify-between w-full gap-2">
+                              <span>{teacher.name} - {teacher.subject}</span>
+                              {hasAdjacent && (
+                                <span className="text-amber-600 text-xs">⚠️</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        )
+                      })
                     ) : (
                       <SelectItem value="none" disabled>
                         لا يوجد معلمين متاحين
@@ -396,18 +435,28 @@ export function AbsencePage() {
                 </Select>
 
                 {substituteWarning && (
-                  <Alert className="border-amber-500 bg-amber-50">
-                    <Warning className="h-4 w-4 text-amber-600" />
-                    <AlertDescription className="text-sm text-amber-800">
+                  <Alert className="border-amber-500 bg-amber-50/80 shadow-sm">
+                    <Warning className="h-5 w-5 text-amber-600" />
+                    <AlertDescription className="text-sm text-amber-900 font-medium leading-relaxed">
                       {substituteWarning}
+                      <div className="mt-2 text-xs text-amber-700 font-normal">
+                        💡 يمكنك المتابعة بالاختيار أو تغيير المعلم البديل لضمان الراحة المناسبة.
+                      </div>
                     </AlertDescription>
                   </Alert>
                 )}
 
-                {selectedPeriods.length > 0 && availableSubstitutes.length === 0 && (
-                  <p className="text-sm text-destructive">
-                    جميع المعلمين مشغولون في هذه الحصص
-                  </p>
+                {selectedPeriods.length > 0 && availableSubstitutes.length === 0 && selectedTeacherId && (
+                  <Alert className="border-destructive/50 bg-destructive/5">
+                    <AlertDescription className="text-sm text-destructive">
+                      ⚠️ جميع المعلمين مشغولون في هذه الحصص
+                      {filterMode !== 'all' && (
+                        <div className="mt-1 text-xs">
+                          💡 جرب استخدام "📋 الجدول العام" لعرض جميع المعلمين
+                        </div>
+                      )}
+                    </AlertDescription>
+                  </Alert>
                 )}
               </div>
 
