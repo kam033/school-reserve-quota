@@ -154,7 +154,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
 }
 
 interface HomePageProps {
-  onNavigate: (page: 'home' | 'upload' | 'schedules' | 'absences' | 'stats') => void
+  onNavigate: (page: 'home' | 'upload' | 'schedules' | 'absences' | 'stats' | 'view') => void
 }
 
 export function HomePage({ onNavigate }: HomePageProps) {
@@ -192,9 +192,16 @@ export function HomePage({ onNavigate }: HomePageProps) {
       show: !!currentUser,
     },
     {
+      title: 'عرض الجدول الكامل',
+      description: 'عرض جميع البيانات من الملف المحمل',
+      icon: ListBullets,
+      action: () => onNavigate('view'),
+      show: !!currentUser,
+    },
+    {
       title: 'جداول المعلمين',
       description: 'عرض جدول كل معلم',
-      icon: ListBullets,
+      icon: CalendarBlank,
       action: () => onNavigate('schedules'),
       show: !!currentUser,
     },

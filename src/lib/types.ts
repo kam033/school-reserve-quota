@@ -11,9 +11,13 @@ export interface User {
 
 export interface Teacher {
   id: string
+  originalId?: string
   name: string
+  short?: string
   subject: string
   schoolId: string
+  gender?: string
+  color?: string
 }
 
 export interface Period {
@@ -23,6 +27,50 @@ export interface Period {
   teacherId: string
   subject: string
   className?: string
+  startTime?: string
+  endTime?: string
+}
+
+export interface Day {
+  day: string
+  name: string
+  short: string
+}
+
+export interface Class {
+  id: string
+  originalId?: string
+  name: string
+  short: string
+  classroomids?: string
+  teacherid?: string
+  grade?: string
+}
+
+export interface Subject {
+  id: string
+  originalId?: string
+  name: string
+  short: string
+}
+
+export interface Classroom {
+  id: string
+  originalId?: string
+  name: string
+  short: string
+}
+
+export interface TimeTableSchedule {
+  id: string
+  dayID: string
+  period: number
+  lengthID?: string
+  schoolRoomID?: string
+  subjectGradeID?: string
+  classID?: string
+  optionalClassID?: string
+  teacherID: string
 }
 
 export interface Absence {
@@ -43,6 +91,11 @@ export interface School {
 export interface ScheduleData {
   teachers: Teacher[]
   periods: Period[]
+  classes: Class[]
+  subjects: Subject[]
+  classrooms: Classroom[]
+  days: Day[]
+  schedules: TimeTableSchedule[]
   schoolId: string
   uploadDate: string
 }

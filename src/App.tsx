@@ -6,10 +6,11 @@ import { XMLUploadPage } from '@/components/XMLUploadPage'
 import { TeacherSchedulesPage } from '@/components/TeacherSchedulesPage'
 import { AbsencePage } from '@/components/AbsencePage'
 import { StatsPage } from '@/components/StatsPage'
+import { ScheduleViewPage } from '@/components/ScheduleViewPage'
 import { Button } from '@/components/ui/button'
-import { House, ArrowRight } from '@phosphor-icons/react'
+import { House } from '@phosphor-icons/react'
 
-type Page = 'home' | 'upload' | 'schedules' | 'absences' | 'stats'
+type Page = 'home' | 'upload' | 'schedules' | 'absences' | 'stats' | 'view'
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('home')
@@ -26,6 +27,8 @@ function AppContent() {
         return <AbsencePage />
       case 'stats':
         return <StatsPage />
+      case 'view':
+        return <ScheduleViewPage />
       default:
         return <HomePage onNavigate={setCurrentPage} />
     }

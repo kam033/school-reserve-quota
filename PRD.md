@@ -13,11 +13,11 @@ This system handles XML parsing, user authentication, role-based views, and data
 ## Essential Features
 
 ### XML File Upload & Parsing
-- **Functionality**: Upload and parse aSc Timetables XML files containing teacher schedules, subjects, and periods
-- **Purpose**: Automate schedule data entry to eliminate manual input errors and save administrative time
-- **Trigger**: User clicks "تحميل الجدول" button and selects XML file
-- **Progression**: File select → Upload → XML parsing → UTF-8 validation → Data extraction → Error checking → Confirmation message → Redirect to schedules view
-- **Success criteria**: System correctly extracts teacher names, subjects, periods, and days; displays warnings for encoding issues or duplicates; shows success toast with data summary
+- **Functionality**: Upload and parse aSc Timetables XML files with automatic encoding detection, star removal, and comprehensive data extraction (teachers, classes, subjects, periods, schedules)
+- **Purpose**: Automate schedule data entry with robust error handling and user guidance to ensure accurate Arabic text rendering and complete data import
+- **Trigger**: User clicks "تحميل الجدول" button and selects XML file, or accesses "دليل التحضير" for preparation guidance
+- **Progression**: File select → UTF-8 encoding check → Automatic star (*) removal from IDs → XML parsing → Multi-section data extraction (days, periods, teachers, classes, subjects, classrooms, schedules) → Encoding validation → Error/warning display → Success confirmation → Data storage
+- **Success criteria**: System correctly extracts all data sections; automatically fixes star notation in IDs; detects and reports Arabic encoding issues; shows detailed warnings for missing UTF-8 headers, duplicate entries, and gender field inconsistencies; provides interactive guide with downloadable sample XML; displays comprehensive statistics of extracted data
 
 ### User Authentication & Role Management
 - **Functionality**: Three-tier access system (System Admin, School Director, Teacher) with role-based permissions
@@ -27,11 +27,11 @@ This system handles XML parsing, user authentication, role-based views, and data
 - **Success criteria**: System correctly restricts features by role; admins see all schools, directors see their school only, teachers see personal schedules
 
 ### Teacher Schedule Display
-- **Functionality**: Auto-generated visual timetables showing each teacher's daily and weekly class assignments
-- **Purpose**: Quick reference for teachers and administrators to view teaching loads and availability
-- **Trigger**: Navigate to "جداول المعلمين" section
-- **Progression**: Section access → Teacher selection → Schedule retrieval → Grid layout rendering → Period highlighting
-- **Success criteria**: All periods display correctly in Arabic; daily/weekly totals accurate; current period highlighted; mobile-responsive grid
+- **Functionality**: Comprehensive timetable viewer with tabbed interface showing complete schedule data, teacher lists, class information, subjects, and classroom assignments
+- **Purpose**: Provide instant access to all imported schedule data with proper Arabic text rendering and relational lookups between teachers, classes, and periods
+- **Trigger**: Navigate to "عرض الجدول الكامل" section after XML upload
+- **Progression**: Section access → Data retrieval → Summary statistics cards → Tabbed interface rendering → Table displays with scrollable content → Cross-reference lookups for names/IDs
+- **Success criteria**: All Arabic text displays correctly; relationships between teachers, classes, subjects resolved accurately; schedule shows proper day names in Arabic; filterable/sortable tables; responsive mobile view; summary cards show accurate counts
 
 ### Absence Recording & Substitute Assignment
 - **Functionality**: Log teacher absences and assign available substitute teachers for specific periods
@@ -49,9 +49,15 @@ This system handles XML parsing, user authentication, role-based views, and data
 
 ## Edge Case Handling
 
-- **Malformed XML** - Display specific error message in Arabic indicating line number and issue type; offer file validation tips
-- **Mixed/Incorrect Encoding** - Auto-detect encoding issues, show warning with affected teacher names, provide UTF-8 conversion guidance
-- **Duplicate Teachers** - Flag duplicates with warning badge, allow admin to merge or keep separate with confirmation dialog
+- **Malformed XML** - Display specific error message in Arabic indicating parsing failure; offer validation tips and link to preparation guide
+- **Mixed/Incorrect Encoding** - Auto-detect characters like � or ?, show specific error with affected names, provide UTF-8 conversion guidance in dedicated guide tab
+- **Missing UTF-8 Declaration** - Show warning suggesting addition of <?xml version="1.0" encoding="UTF-8"?> header
+- **Star Notation in IDs** - Automatically remove * prefix from all ID fields (id="*1" → id="1"); show warning count of cleaned IDs
+- **Incorrect Gender Field** - Detect gender="F" and warn user; suggest changing to "M" or removing attribute
+- **Duplicate Teachers** - Flag duplicates with warning showing both ID and name; continue processing but alert user
+- **Missing Required Fields** - Warn when teachers/classes lack id or name attributes; skip entries but log in warnings
+- **Unclosed XML Tags** - Detect parser errors and suggest checking tag closure; link to structure guide
+- **Empty Schedule Section** - Warn if <TimeTableSchedules> is missing or empty; still process other sections
 - **No Available Substitutes** - Show message indicating all teachers are occupied; suggest checking adjacent periods or marking as uncovered
 - **Concurrent Absences** - Handle multiple teachers absent same period; show coverage priority list; allow partial assignment
 - **Past Date Editing** - Warn when editing historical data; require confirmation; maintain audit trail of changes
@@ -99,18 +105,21 @@ Animations should be purposeful and efficient - providing immediate feedback for
 - **Components**:
   - **Dialog** - User login, new user creation, absence recording forms requiring focused input
   - **Card** - Teacher schedule displays, statistical summaries, individual absence records with subtle shadows for depth
-  - **Table** - Schedule grids with responsive column sizing; bordered cells for clear period delineation
-  - **Button** - Primary (upload, submit), Secondary (cancel, back), Ghost (table actions) with appropriate visual hierarchy
+  - **Table** - Schedule grids with responsive column sizing; bordered cells for clear period delineation; scrollable areas for large datasets
+  - **Tabs** - Two-tab interface for XML upload page (رفع الملف / دليل التحضير); five-tab interface for schedule view (الجدول / المعلمون / الفصول / المواد / الغرف)
+  - **Button** - Primary (upload, submit), Secondary (cancel, back, download sample), Ghost (table actions) with appropriate visual hierarchy
   - **Select** - Teacher selection, date/period pickers with search functionality for large lists
-  - **Alert** - XML validation warnings, duplicate detection, encoding issues with appropriate severity colors
-  - **Badge** - Period counts, absence indicators, substitute assignments with color coding
-  - **Tabs** - Switch between daily/weekly views, different school sections
-  - **Separator** - Visual division between dashboard sections without heavy borders
+  - **Alert** - XML validation warnings (encoding, stars, gender), errors (parsing, missing fields), success messages with appropriate severity colors
+  - **Badge** - Period counts, gender indicators (M/F), grade levels, day markers with color coding
+  - **ScrollArea** - Scrollable table containers for large datasets (600px height) with custom scrollbar styling
+  - **Separator** - Visual division between guide sections and dashboard areas
   
 - **Customizations**:
+  - **XML Preparation Guide** - Comprehensive 7-step tutorial with code examples, do's/don'ts comparisons, keyboard shortcuts, and downloadable sample XML
   - **Schedule Grid Component** - Custom component for displaying timetable with color-coded periods, hover tooltips showing subject details
-  - **RTL Layout Wrapper** - Ensure proper right-to-left layout for Arabic interface elements
-  - **XML Upload Zone** - Drag-and-drop area with file validation preview
+  - **RTL Layout Wrapper** - Ensure proper right-to-left layout for Arabic interface elements throughout all pages
+  - **XML Upload Zone** - Drag-and-drop area with file validation preview and direct link to preparation guide
+  - **Statistics Cards** - Summary cards showing counts of teachers, classes, subjects, days, and periods with appropriate icons
   
 - **States**:
   - Buttons: Subtle shadow on default, deeper shadow and scale on hover, pressed state with slight darkening, disabled state at 50% opacity
@@ -119,13 +128,21 @@ Animations should be purposeful and efficient - providing immediate feedback for
   
 - **Icon Selection**:
   - Upload (CloudArrowUp) for file upload
-  - Calendar (CalendarBlank) for date selection
-  - User (User) for teacher profiles
-  - Warning (WarningCircle) for validation errors
-  - Check (CheckCircle) for successful operations
-  - List (ListBullets) for schedule views
+  - BookOpen for preparation guide tab
+  - Download for sample XML download
+  - Calendar (CalendarBlank) for teacher schedules and date selection
+  - UsersThree for teacher counts
+  - Door for classroom/class indicators
+  - Books for subjects
+  - Clock for periods/time
+  - User for teacher profiles
+  - Warning (WarningCircle) for validation warnings
+  - XCircle for errors
+  - Check (CheckCircle) for successful operations and correct examples
+  - List (ListBullets) for schedule table view
   - ChartBar for statistics
   - SignIn for login
+  - House for home navigation
   
 - **Spacing**: Base spacing scale of 4px (Tailwind's 1 unit); cards use p-6, buttons use px-4 py-2, sections separated by mb-8, grid gaps of gap-4
   
