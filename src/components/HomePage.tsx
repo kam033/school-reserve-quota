@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth'
 import { useKV } from '@github/spark/hooks'
 import { ScheduleData } from '@/lib/types'
-import { SignIn, UserPlus, Upload, CalendarBlank, ListBullets, ChartBar, Users, WarningCircle, CheckCircle } from '@phosphor-icons/react'
+import { SignIn, UserPlus, Upload, CalendarBlank, ListBullets, ChartBar, Users, WarningCircle, CheckCircle, Sparkle } from '@phosphor-icons/react'
 
 interface LoginDialogProps {
   open: boolean
@@ -157,7 +157,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
 }
 
 interface HomePageProps {
-  onNavigate: (page: 'home' | 'upload' | 'schedules' | 'absences' | 'stats' | 'view') => void
+  onNavigate: (page: 'home' | 'upload' | 'schedules' | 'absences' | 'stats' | 'view' | 'analytics') => void
 }
 
 export function HomePage({ onNavigate }: HomePageProps) {
@@ -217,6 +217,13 @@ export function HomePage({ onNavigate }: HomePageProps) {
       description: 'تسجيل غياب المعلمين اليومي',
       icon: CalendarBlank,
       action: () => onNavigate('absences'),
+      show: !!currentUser,
+    },
+    {
+      title: 'الرسم البياني الذكي',
+      description: 'تحليل الأحمال واختيار البديل الأمثل',
+      icon: Sparkle,
+      action: () => onNavigate('analytics'),
       show: !!currentUser,
     },
     {

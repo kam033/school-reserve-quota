@@ -47,6 +47,13 @@ This system handles XML parsing, user authentication, role-based views, and data
 - **Progression**: Dashboard access → Data aggregation → Chart rendering → Metric calculation → Display update
 - **Success criteria**: All metrics accurate; charts render smoothly; data updates when new absences recorded; shows warnings for high absence rates
 
+### Smart Analytics Dashboard with AI-Based Substitute Finder
+- **Functionality**: Interactive analytics dashboard with three main sections: (1) **Visual Analytics** - Bar/line charts showing daily teaching loads per teacher across weekdays, with filters for individual teachers, subjects, or all teachers comparison; (2) **Smart Substitute Finder** - AI-powered system that analyzes all teachers and recommends optimal substitutes based on scoring algorithm (free in period +5, same subject +3, same grade +2, adjacent period -3, fairness consideration ±2), with filters for all teachers, same subject, or same grade; (3) **Fairness Tracking** - Progress bars showing each teacher's substitute load percentage with color coding (green <20%, yellow 20-40%, red >40%) to ensure equitable distribution of substitute duties
+- **Purpose**: Provide administrators with visual insights into teaching loads, automate the complex decision-making process of finding the best substitute teacher using data-driven scoring, and ensure fair distribution of substitute duties across all teachers through transparent tracking and analytics
+- **Trigger**: Click "الرسم البياني الذكي" from homepage or navigate to analytics section
+- **Progression**: Page access → Tab selection (Analytics/Substitute/Fairness) → **Analytics tab**: Select teacher/subject/chart type → Chart renders with Recharts showing daily loads → Compare teachers visually | **Substitute tab**: Select day/period → Choose filter type (all/subject/grade) → System calculates scores → Displays ranked list with reasoning → Best candidate highlighted | **Fairness tab**: System calculates substitute percentages → Progress bars render → Color coding applied → Recommendations shown
+- **Success criteria**: Charts render smoothly with accurate daily load calculations; all teacher names displayed correctly in Arabic; color coding matches subjects consistently; substitute finder correctly identifies teachers who are free (not in another class during that period); scoring algorithm properly weights factors (availability, subject match, grade match, adjacent periods, fairness); displays detailed reasoning for each candidate's score; highlights best candidate with badge; fairness percentages calculated accurately based on historical substitute assignments; color indicators update dynamically; mobile-responsive layout; handles edge cases (no available substitutes, all teachers busy, new teachers with no history); integrates with existing absence recording system
+
 ## Edge Case Handling
 
 - **Malformed XML** - Display specific error message in Arabic indicating parsing failure; offer validation tips and link to preparation guide
@@ -142,6 +149,7 @@ Animations should be purposeful and efficient - providing immediate feedback for
   - Check (CheckCircle) for successful operations and correct examples
   - List (ListBullets) for schedule table view
   - ChartBar for statistics
+  - Sparkle for smart analytics and AI features
   - SignIn for login
   - House for home navigation
   

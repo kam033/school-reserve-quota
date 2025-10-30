@@ -7,13 +7,14 @@ import { TeacherSchedulesPage } from '@/components/TeacherSchedulesPage'
 import { AbsencePage } from '@/components/AbsencePage'
 import { StatsPage } from '@/components/StatsPage'
 import { ScheduleViewPage } from '@/components/ScheduleViewPage'
+import { SmartAnalyticsPage } from '@/components/SmartAnalyticsPage'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { House } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { ScheduleData } from '@/lib/types'
 
-type Page = 'home' | 'upload' | 'schedules' | 'absences' | 'stats' | 'view'
+type Page = 'home' | 'upload' | 'schedules' | 'absences' | 'stats' | 'view' | 'analytics'
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('home')
@@ -43,6 +44,8 @@ function AppContent() {
         return <StatsPage />
       case 'view':
         return <ScheduleViewPage />
+      case 'analytics':
+        return <SmartAnalyticsPage />
       default:
         return <HomePage onNavigate={setCurrentPage} />
     }
