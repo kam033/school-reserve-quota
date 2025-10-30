@@ -166,6 +166,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
   const [loginOpen, setLoginOpen] = useState(false)
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteAllUnknownDialogOpen, setDeleteAllUnknownDialogOpen] = useState(false)
   const [absenceToDelete, setAbsenceToDelete] = useState<string | null>(null)
   const { currentUser, logout } = useAuth()
   const [schedules] = useKV<ScheduleData[]>('schedules', [])
@@ -187,6 +188,14 @@ export function HomePage({ onNavigate }: HomePageProps) {
       .slice(0, 5)
   }, [absences])
 
+  const unknownAbsencesCount = useMemo(() => {
+    if (!absences || !Array.isArray(absences)) return 0
+    return absences.filter(absence => {
+      const teacherName = getTeacherName(absence.teacherId)
+      return teacherName === 'غير معروف'
+    }).length
+  }, [absences, allTeachers])
+
   const getTeacherName = (teacherId: string): string => {
     return allTeachers.find((t) => t.id === teacherId)?.name || 'غير معروف'
   }
@@ -203,6 +212,23 @@ export function HomePage({ onNavigate }: HomePageProps) {
       setDeleteDialogOpen(false)
       setAbsenceToDelete(null)
     }
+  }
+
+  const handleDeleteAllUnknown = () => {
+    setDeleteAllUnknownDialogOpen(true)
+  }
+
+  const confirmDeleteAllUnknown = () => {
+    const count = unknownAbsencesCount
+    setAbsences((current) => {
+      if (!current || !Array.isArray(current)) return []
+      return current.filter(absence => {
+        const teacherName = getTeacherName(absence.teacherId)
+        return teacherName !== 'غير معروف'
+      })
+    })
+    toast.success(`✅ تم حذف ${count} سجل غير معروف بنجاح`)
+    setDeleteAllUnknownDialogOpen(false)
   }
 
   const menuItems = [
@@ -366,73 +392,103 @@ export function HomePage({ onNavigate }: HomePageProps) {
         {currentUser && recentAbsences.length > 0 && (
           <Card className="mt-8">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserCircleMinus className="w-5 h-5" />
-                الغيابات الأخيرة
-                <Badge variant="secondary" className="mr-auto">
-                  {recentAbsences.length}
-                </Badge>
-              </CardTitle>
-              <CardDescription>
-                آخر {recentAbsences.length} غيابات مسجلة في النظام
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="flex items-center gap-2">
+                    <UserCircleMinus className="w-5 h-5" />
+                    الغيابات الأخيرة
+                    <Badge variant="secondary" className="mr-2">
+                      {recentAbsences.length}
+                    </Badge>
+                  </CardTitle>
+                  <CardDescription>
+                    آخر {recentAbsences.length} غيابات مسجلة في النظام
+                  </CardDescription>
+                </div>
+                
+                {unknownAbsencesCount > 0 && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteAllUnknown}
+                    className="gap-2"
+                  >
+                    <Trash className="w-4 h-4" />
+                    🧹 حذف جميع "غير معروف" ({unknownAbsencesCount})
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {recentAbsences.map((absence) => (
-                  <div
-                    key={absence.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/5 transition-colors"
-                  >
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-3">
-                        <p className="font-medium text-lg">{getTeacherName(absence.teacherId)}</p>
-                        <Badge variant="destructive" className="text-xs">غائب</Badge>
-                      </div>
-                      
-                      <div className="flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <CalendarBlank className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">{absence.date}</span>
+                {recentAbsences.map((absence) => {
+                  const teacherName = getTeacherName(absence.teacherId)
+                  const isUnknown = teacherName === 'غير معروف'
+                  
+                  return (
+                    <div
+                      key={absence.id}
+                      className={`flex items-center justify-between p-4 border rounded-lg hover:bg-accent/5 transition-colors ${
+                        isUnknown ? 'bg-destructive/5 border-destructive/30' : ''
+                      }`}
+                    >
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-3">
+                          <p className={`font-medium text-lg ${isUnknown ? 'text-destructive' : ''}`}>
+                            {teacherName}
+                          </p>
+                          <Badge variant="destructive" className="text-xs">غائب</Badge>
+                          {isUnknown && (
+                            <Badge variant="outline" className="text-xs border-destructive text-destructive">
+                              ⚠️ غير معروف
+                            </Badge>
+                          )}
                         </div>
                         
-                        <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground">الحصص:</span>
-                          <div className="flex gap-1">
-                            {absence.periods.map((p) => (
-                              <Badge key={p} variant="outline" className="text-xs">
-                                {p}
-                              </Badge>
-                            ))}
+                        <div className="flex items-center gap-4 text-sm">
+                          <div className="flex items-center gap-2">
+                            <CalendarBlank className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">{absence.date}</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground">الحصص:</span>
+                            <div className="flex gap-1">
+                              {absence.periods.map((p) => (
+                                <Badge key={p} variant="outline" className="text-xs">
+                                  {p}
+                                </Badge>
+                              ))}
+                            </div>
                           </div>
                         </div>
+
+                        {absence.substituteTeacherId ? (
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="text-muted-foreground">البديل:</span>
+                            <span className="font-medium text-accent">
+                              {getTeacherName(absence.substituteTeacherId)}
+                            </span>
+                          </div>
+                        ) : (
+                          <Badge variant="outline" className="text-xs w-fit">
+                            بدون بديل
+                          </Badge>
+                        )}
                       </div>
 
-                      {absence.substituteTeacherId ? (
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-muted-foreground">البديل:</span>
-                          <span className="font-medium text-accent">
-                            {getTeacherName(absence.substituteTeacherId)}
-                          </span>
-                        </div>
-                      ) : (
-                        <Badge variant="outline" className="text-xs w-fit">
-                          بدون بديل
-                        </Badge>
-                      )}
+                      <Button
+                        variant={isUnknown ? "destructive" : "outline"}
+                        size="sm"
+                        onClick={() => handleDeleteAbsence(absence.id)}
+                        className="gap-2 shrink-0"
+                      >
+                        <Trash className="w-4 h-4" />
+                        {isUnknown ? '🗑️ حذف' : 'حذف الغياب'}
+                      </Button>
                     </div>
-
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteAbsence(absence.id)}
-                      className="gap-2 shrink-0"
-                    >
-                      <Trash className="w-4 h-4" />
-                      حذف الغياب
-                    </Button>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </CardContent>
           </Card>
@@ -454,6 +510,23 @@ export function HomePage({ onNavigate }: HomePageProps) {
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDeleteAbsence} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               تأكيد الحذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteAllUnknownDialogOpen} onOpenChange={setDeleteAllUnknownDialogOpen}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>⚠️ هل تريد حذف جميع السجلات "غير معروف" نهائيًا من النظام؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف {unknownAbsencesCount} سجل غياب بشكل دائم من قاعدة البيانات. هذا الإجراء لا يمكن التراجع عنه.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteAllUnknown} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              🧹 حذف الكل
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
