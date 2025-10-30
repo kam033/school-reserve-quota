@@ -11,11 +11,11 @@ export function XMLGuide() {
 <timetable>
 
   <days options="canadd,export:silent" columns="day,name,short">
-    <day name="الأحد" short="احد" day="0"/>
-    <day name="الإثنين" short="اثنين" day="1"/>
-    <day name="الثلاثاء" short="ثلاثاء" day="2"/>
-    <day name="الأربعاء" short="اربعاء" day="3"/>
-    <day name="الخميس" short="خميس" day="4"/>
+    <day name="الأحد" short="احد" day="1"/>
+    <day name="الاثنين" short="اثنين" day="2"/>
+    <day name="الثلاثاء" short="ثلاثاء" day="3"/>
+    <day name="الأربعاء" short="اربعاء" day="4"/>
+    <day name="الخميس" short="خميس" day="5"/>
   </days>
 
   <periods options="canadd,export:silent" columns="period,starttime,endtime">
@@ -49,8 +49,9 @@ export function XMLGuide() {
   </classrooms>
 
   <TimeTableSchedules options="canadd,canremove,canupdate,silent" columns="DayID,Period,LengthID,SchoolRoomID,SubjectGradeID,ClassID,OptionalClassID,TeacherID">
-    <TimeTableSchedule DayID="0" Period="1" LengthID="0" SchoolRoomID="1" SubjectGradeID="1" ClassID="1" TeacherID="1"/>
-    <TimeTableSchedule DayID="0" Period="2" LengthID="0" SchoolRoomID="2" SubjectGradeID="2" ClassID="2" TeacherID="2"/>
+    <TimeTableSchedule DayID="1" Period="1" LengthID="0" SchoolRoomID="1" SubjectGradeID="1" ClassID="1" TeacherID="1"/>
+    <TimeTableSchedule DayID="1" Period="2" LengthID="0" SchoolRoomID="2" SubjectGradeID="2" ClassID="2" TeacherID="2"/>
+    <TimeTableSchedule DayID="2" Period="1" LengthID="0" SchoolRoomID="1" SubjectGradeID="1" ClassID="1" TeacherID="1"/>
   </TimeTableSchedules>
 
 </timetable>`
@@ -139,6 +140,51 @@ export function XMLGuide() {
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Badge variant="secondary">2</Badge>
+              تأكد من ترقيم الأيام بشكل صحيح
+            </h3>
+            <p className="text-muted-foreground mb-3">
+              في aSc Timetables، ترقيم الأيام يجب أن يكون على النحو التالي:
+            </p>
+            <Alert className="bg-accent/10 border-accent mb-3">
+              <CheckCircle className="h-4 w-4 text-accent" />
+              <AlertDescription>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <code className="bg-background px-2 py-1 rounded font-mono">day="1"</code>
+                    <span>→ الأحد (Sunday)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <code className="bg-background px-2 py-1 rounded font-mono">day="2"</code>
+                    <span>→ الاثنين (Monday)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <code className="bg-background px-2 py-1 rounded font-mono">day="3"</code>
+                    <span>→ الثلاثاء (Tuesday)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <code className="bg-background px-2 py-1 rounded font-mono">day="4"</code>
+                    <span>→ الأربعاء (Wednesday)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <code className="bg-background px-2 py-1 rounded font-mono">day="5"</code>
+                    <span>→ الخميس (Thursday)</span>
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+            <Alert>
+              <WarningCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>مهم جداً:</strong> إذا كان ترقيم الأيام في ملف XML الخاص بك يبدأ من 0 (day="0" للأحد)، فقد تظهر الحصص في أيام خاطئة. تأكد من أن الترقيم يطابق ترتيب aSc Timetables الذي يبدأ من 1.
+              </AlertDescription>
+            </Alert>
+          </div>
+
+          <Separator />
+
+          <div>
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Badge variant="secondary">3</Badge>
               إزالة جميع النجوم (*)
             </h3>
             <p className="text-muted-foreground mb-3">
@@ -189,7 +235,7 @@ export function XMLGuide() {
 
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Badge variant="secondary">3</Badge>
+              <Badge variant="secondary">4</Badge>
               تأكد من إغلاق كل قسم
             </h3>
             <p className="text-muted-foreground mb-3">
@@ -217,7 +263,7 @@ export function XMLGuide() {
 
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Badge variant="secondary">4</Badge>
+              <Badge variant="secondary">5</Badge>
               عدّل خاصية الجنس (gender)
             </h3>
             <p className="text-muted-foreground mb-3">
@@ -244,7 +290,7 @@ export function XMLGuide() {
 
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Badge variant="secondary">5</Badge>
+              <Badge variant="secondary">6</Badge>
               غلّف قسم الجدول داخل وسمه
             </h3>
             <p className="text-muted-foreground mb-3">
@@ -268,7 +314,7 @@ export function XMLGuide() {
 
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Badge variant="secondary">6</Badge>
+              <Badge variant="secondary">7</Badge>
               احفظ الملف بالترميز الصحيح
             </h3>
             <div className="space-y-3">
@@ -293,7 +339,7 @@ export function XMLGuide() {
 
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Badge variant="secondary">7</Badge>
+              <Badge variant="secondary">8</Badge>
               جرب رفع الملف في النظام
             </h3>
             <p className="text-muted-foreground mb-3">

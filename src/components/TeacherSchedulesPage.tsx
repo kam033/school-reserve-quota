@@ -71,7 +71,7 @@ export function TeacherSchedulesPage() {
       (s) => s.teacherID === teacherOriginalId
     )
 
-    const daysOrder = ['0', '1', '2', '3', '4']
+    const daysOrder = ['1', '2', '3', '4', '5']
     const maxPeriods = 8
 
     const schedule: ScheduleCell[][] = []

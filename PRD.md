@@ -27,11 +27,11 @@ This system handles XML parsing, user authentication, role-based views, and data
 - **Success criteria**: System correctly restricts features by role; admins see all schools, directors see their school only, teachers see personal schedules
 
 ### Teacher Schedule Display
-- **Functionality**: Comprehensive timetable viewer with tabbed interface showing complete schedule data, teacher lists, class information, subjects, and classroom assignments
-- **Purpose**: Provide instant access to all imported schedule data with proper Arabic text rendering and relational lookups between teachers, classes, and periods
-- **Trigger**: Navigate to "عرض الجدول الكامل" section after XML upload
-- **Progression**: Section access → Data retrieval → Summary statistics cards → Tabbed interface rendering → Table displays with scrollable content → Cross-reference lookups for names/IDs
-- **Success criteria**: All Arabic text displays correctly; relationships between teachers, classes, subjects resolved accurately; schedule shows proper day names in Arabic; filterable/sortable tables; responsive mobile view; summary cards show accurate counts
+- **Functionality**: Comprehensive timetable viewer with tabbed interface showing complete schedule data, teacher lists, class information, subjects, and classroom assignments. **The system correctly displays schedules with proper day mapping from aSc Timetables where day IDs (1=Sunday, 2=Monday, 3=Tuesday, 4=Wednesday, 5=Thursday) are mapped to Arabic day names in the correct order.**
+- **Purpose**: Provide instant access to all imported schedule data with proper Arabic text rendering and relational lookups between teachers, classes, and periods. **Ensure that schedule cells match aSc Timetables exactly - displaying each class in the correct day column and period row without any shifts or misalignment.**
+- **Trigger**: Navigate to "عرض الجدول الكامل" section after XML upload, or select teacher from "جدول المعلمين الأسبوعي" page
+- **Progression**: Section access → Data retrieval → **Day ID mapping from XML (1-5) to display order (Sunday-Thursday)** → Summary statistics cards → Tabbed interface rendering → Table displays with scrollable content → Cross-reference lookups for names/IDs → **Color-coded schedule cells with subject and class information** → Tooltip display on hover showing full details
+- **Success criteria**: All Arabic text displays correctly; relationships between teachers, classes, subjects resolved accurately; schedule shows proper day names in Arabic **in correct order (الأحد، الاثنين، الثلاثاء، الأربعاء، الخميس)**; **schedule cells match aSc Timetables exactly without day shifts**; filterable/sortable tables; responsive mobile view; summary cards show accurate counts; **each period-day cell displays the correct class based on XML DayID mapping**; **Sunday (day=1) displays in first column, not skipped or shifted**; color-coded subjects with legend; navigation between teachers using arrow buttons
 
 ### Absence Recording & Substitute Assignment
 - **Functionality**: Log teacher absences and assign available substitute teachers for specific periods
@@ -53,6 +53,7 @@ This system handles XML parsing, user authentication, role-based views, and data
 - **Mixed/Incorrect Encoding** - **Automatically normalize any encoding to UTF-8 without BOM** before parsing; show toast notification during conversion; handle ANSI, UTF-8 with BOM, and other encodings transparently
 - **Missing UTF-8 Declaration** - System handles this automatically through normalization; no longer requires manual intervention
 - **Star Notation in IDs** - Automatically remove * prefix from all ID fields (id="*1" → id="1"); show warning count of cleaned IDs
+- **Incorrect Day ID Mapping** - **System expects aSc Timetables day numbering where 1=Sunday, 2=Monday, 3=Tuesday, 4=Wednesday, 5=Thursday**; if XML uses 0-4 numbering, display warning and provide guidance to adjust day attributes in XML file
 - **Incorrect Gender Field** - Detect gender="F" and warn user; suggest changing to "M" or removing attribute
 - **Duplicate Teachers** - Flag duplicates with warning showing both ID and name; continue processing but alert user
 - **Missing Required Fields** - Warn when teachers/classes lack id or name attributes; skip entries but log in warnings
