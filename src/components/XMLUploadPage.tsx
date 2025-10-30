@@ -108,11 +108,21 @@ export function XMLUploadPage() {
   }
 
   const handleApprove = (scheduleData: ScheduleData) => {
+    const approvedData = { 
+      ...scheduleData, 
+      approved: true,
+      approvedDate: scheduleData.approvedDate || new Date().toISOString()
+    }
+    
     setSchedules((current) => 
       (current || []).map(s => 
-        s === scheduleData ? { ...s, approved: true } : s
+        s === scheduleData ? approvedData : s
       )
     )
+    
+    if (lastUploadedSchedule === scheduleData) {
+      setLastUploadedSchedule(approvedData)
+    }
   }
 
   const handleDelete = () => {

@@ -55,14 +55,14 @@ export function TeacherDataTable({ scheduleData, onApprove, onDelete }: TeacherD
   }, [teacherData])
 
   const handleApprove = () => {
-    setIsApproved(true)
     const approvedData = { 
       ...scheduleData, 
       approved: true,
-      approvedDate: new Date().toISOString()
+      approvedDate: scheduleData.approvedDate || new Date().toISOString()
     }
+    setIsApproved(true)
     onApprove?.(approvedData)
-    toast.success('✅ تم اعتماد البيانات بنجاح - يمكن الآن استخدام الجدول في النظام', {
+    toast.success('✅ تم اعتماد البيانات بنجاح - يمكن الآن استخدام جميع الأزرار في النظام', {
       duration: 4000,
     })
   }
