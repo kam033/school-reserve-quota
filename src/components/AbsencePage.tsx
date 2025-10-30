@@ -92,14 +92,22 @@ export function AbsencePage() {
     setSubstituteId('')
   }
 
+  const getTeacherName = (teacherId: string): string => {
+    return allTeachers.find((t) => t.id === teacherId)?.name || 'غير معروف'
+  }
+
   const todayAbsences = useMemo(() => {
     if (!absences || !Array.isArray(absences)) return []
     return absences.filter((a) => a.date === selectedDate)
   }, [absences, selectedDate])
 
-  const getTeacherName = (teacherId: string): string => {
-    return allTeachers.find((t) => t.id === teacherId)?.name || 'غير معروف'
-  }
+  const unknownAbsencesCount = useMemo(() => {
+    if (!absences || !Array.isArray(absences)) return 0
+    return absences.filter((absence) => 
+      getTeacherName(absence.teacherId) === 'غير معروف' ||
+      (absence.substituteTeacherId && getTeacherName(absence.substituteTeacherId) === 'غير معروف')
+    ).length
+  }, [absences, allTeachers])
 
   const handleDeleteAbsence = (absenceId: string) => {
     setAbsences((current) => (current || []).filter((a) => a.id !== absenceId))
@@ -120,14 +128,6 @@ export function AbsencePage() {
     const substituteUnknown = absence.substituteTeacherId ? getTeacherName(absence.substituteTeacherId) === 'غير معروف' : false
     return teacherUnknown || substituteUnknown
   }
-
-  const unknownAbsencesCount = useMemo(() => {
-    if (!absences || !Array.isArray(absences)) return 0
-    return absences.filter((absence) => 
-      getTeacherName(absence.teacherId) === 'غير معروف' ||
-      (absence.substituteTeacherId && getTeacherName(absence.substituteTeacherId) === 'غير معروف')
-    ).length
-  }, [absences, allTeachers])
 
   const handleDeleteAllUnknown = () => {
     const count = unknownAbsencesCount
