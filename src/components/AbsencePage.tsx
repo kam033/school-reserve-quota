@@ -34,6 +34,10 @@ export function AbsencePage() {
     return approvedSchedules.flatMap((schedule) => schedule.teachers || [])
   }, [approvedSchedules])
 
+  function getTeacherName(teacherId: string): string {
+    return allTeachers.find((t) => t.id === teacherId)?.name || 'غير معروف'
+  }
+
   const availableSubstitutes = useMemo(() => {
     if (approvedSchedules.length === 0 || !selectedDay || selectedPeriods.length === 0) return []
     
@@ -90,10 +94,6 @@ export function AbsencePage() {
     setSelectedTeacherId('')
     setSelectedPeriods([])
     setSubstituteId('')
-  }
-
-  const getTeacherName = (teacherId: string): string => {
-    return allTeachers.find((t) => t.id === teacherId)?.name || 'غير معروف'
   }
 
   const todayAbsences = useMemo(() => {

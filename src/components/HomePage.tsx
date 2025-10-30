@@ -181,6 +181,10 @@ export function HomePage({ onNavigate }: HomePageProps) {
     return approvedSchedules.flatMap((schedule) => schedule.teachers || [])
   }, [schedules])
 
+  function getTeacherName(teacherId: string): string {
+    return allTeachers.find((t) => t.id === teacherId)?.name || 'غير معروف'
+  }
+
   const recentAbsences = useMemo(() => {
     if (!absences || !Array.isArray(absences)) return []
     return absences
@@ -195,10 +199,6 @@ export function HomePage({ onNavigate }: HomePageProps) {
       return teacherName === 'غير معروف'
     }).length
   }, [absences, allTeachers])
-
-  const getTeacherName = (teacherId: string): string => {
-    return allTeachers.find((t) => t.id === teacherId)?.name || 'غير معروف'
-  }
 
   const handleDeleteAbsence = (absenceId: string) => {
     setAbsenceToDelete(absenceId)
