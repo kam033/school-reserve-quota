@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth'
 import { useKV } from '@github/spark/hooks'
 import { ScheduleData } from '@/lib/types'
-import { SignIn, UserPlus, Upload, CalendarBlank, ListBullets, ChartBar, Users, WarningCircle } from '@phosphor-icons/react'
+import { SignIn, UserPlus, Upload, CalendarBlank, ListBullets, ChartBar, Users, WarningCircle, CheckCircle } from '@phosphor-icons/react'
 
 interface LoginDialogProps {
   open: boolean
@@ -296,13 +296,25 @@ export function HomePage({ onNavigate }: HomePageProps) {
           </Card>
         )}
 
-        {currentUser && !hasApprovedSchedule && schedules && schedules.length === 0 && (
+        {currentUser && !hasApprovedSchedule && (
           <Alert className="mt-8 border-blue-500 bg-blue-50/50">
             <WarningCircle className="h-5 w-5 text-blue-600" />
             <AlertDescription className="text-blue-900">
               <p className="font-medium mb-1">💡 ابدأ باستخدام النظام</p>
               <p className="text-sm">
-                لم تقم برفع أي جدول بعد. اضغط على "تحميل الجدول" لرفع ملف XML. سيتم اعتماد الجدول تلقائيًا عند الرفع.
+                لم تقم برفع أي جدول معتمد بعد. اضغط على "تحميل الجدول" لرفع ملف XML. سيتم اعتماد الجدول تلقائيًا عند الرفع.
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {currentUser && hasApprovedSchedule && (
+          <Alert className="mt-8 border-accent bg-accent/10">
+            <CheckCircle className="h-5 w-5 text-accent" />
+            <AlertDescription>
+              <p className="font-medium mb-1">✅ الجدول معتمد</p>
+              <p className="text-sm">
+                لديك جدول معتمد ونشط. يمكنك الآن استخدام جميع وظائف النظام.
               </p>
             </AlertDescription>
           </Alert>

@@ -83,12 +83,15 @@ export function XMLUploadPage() {
       })
 
       if (result.success && result.data) {
-        const approvedData = {
+        const approvedData: ScheduleData = {
           ...result.data,
           approved: true,
           approvedDate: new Date().toISOString()
         }
-        setSchedules((current) => [...(current || []), approvedData])
+        setSchedules((current) => {
+          const existing = current || []
+          return [...existing, approvedData]
+        })
         setLastUploadedSchedule(approvedData)
         const teacherCount = result.data.teachers?.length || 0
         const scheduleCount = result.data.schedules?.length || 0
