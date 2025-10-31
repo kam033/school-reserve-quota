@@ -121,10 +121,21 @@ export function AbsencePage() {
   }, [substituteId, selectedPeriods, selectedDay, approvedSchedules])
 
   const availableSubstitutes = useMemo(() => {
-    if (approvedSchedules.length === 0 || !selectedDay || selectedPeriods.length === 0) return []
+    if (approvedSchedules.length === 0 || !selectedDay || selectedPeriods.length === 0) {
+      console.log('Early return: no schedules, day, or periods selected')
+      return []
+    }
     
     const minPeriod = Math.min(...selectedPeriods)
     const maxPeriod = Math.max(...selectedPeriods)
+    
+    console.log('Checking availability for:', { 
+      selectedDay, 
+      selectedPeriods, 
+      minPeriod, 
+      maxPeriod,
+      selectedTeacherId 
+    })
     
     const unavailableTeacherIds = new Set<string>()
     
@@ -138,15 +149,21 @@ export function AbsencePage() {
               period.periodNumber === maxPeriod + 1
             ) {
               unavailableTeacherIds.add(period.teacherId)
+              console.log(`Teacher ${period.teacherId} unavailable at period ${period.periodNumber}`)
             }
           }
         })
       }
     })
 
+    console.log('Unavailable teacher IDs:', Array.from(unavailableTeacherIds))
+    console.log('Total teachers:', allTeachers.length)
+
     let filteredTeachers = allTeachers.filter((teacher) => 
       teacher.id !== selectedTeacherId && !unavailableTeacherIds.has(teacher.id)
     )
+
+    console.log('After basic filtering:', filteredTeachers.length)
 
     const absentTeacher = getTeacherById(selectedTeacherId)
     const absentTeacherGrade = getAbsentTeacherGrade()
@@ -155,17 +172,30 @@ export function AbsencePage() {
       filteredTeachers = filteredTeachers.filter(
         (teacher) => teacher.subject === absentTeacher.subject
       )
+      console.log('After subject filter:', filteredTeachers.length, 'Subject:', absentTeacher.subject)
     } else if (filterMode === 'grade' && absentTeacherGrade) {
-      filteredTeachers = filteredTeachers.filter((teacher) => {
-        return approvedSchedules.some((schedule) => 
-          schedule.periods?.some((period) => 
-            period.teacherId === teacher.id && 
-            period.className === absentTeacherGrade
-          )
-        )
+      const teachersWithSameGrade = new Set<string>()
+      
+      approvedSchedules.forEach((schedule) => {
+        if (schedule.periods && Array.isArray(schedule.periods)) {
+          schedule.periods.forEach((period) => {
+            if (period.className === absentTeacherGrade) {
+              teachersWithSameGrade.add(period.teacherId)
+            }
+          })
+        }
       })
+      
+      console.log('Teachers with same grade:', Array.from(teachersWithSameGrade), 'Grade:', absentTeacherGrade)
+      
+      filteredTeachers = filteredTeachers.filter((teacher) => 
+        teachersWithSameGrade.has(teacher.id)
+      )
+      
+      console.log('After grade filter:', filteredTeachers.length)
     }
 
+    console.log('Final available substitutes:', filteredTeachers.length)
     return filteredTeachers
   }, [approvedSchedules, selectedDay, selectedPeriods, allTeachers, selectedTeacherId, filterMode])
 
