@@ -358,9 +358,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
               <p className="text-center text-lg">
                 مرحباً بك في نظام إدارة الحصص الاحتياطية. يرجى تسجيل الدخول للمتابعة.
               </p>
-              <p className="text-center text-sm text-muted-foreground mt-2">
-                بيانات الدخول التجريبية: admin / admin123
-              </p>
+              <p className="text-center text-sm text-muted-foreground mt-2">بيانات الدخول التجريبية: admin / admin123</p>
             </CardContent>
           </Card>
         )}
@@ -494,10 +492,8 @@ export function HomePage({ onNavigate }: HomePageProps) {
           </Card>
         )}
       </div>
-
       <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
       <AddUserDialog open={addUserOpen} onOpenChange={setAddUserOpen} />
-      
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader>
@@ -514,7 +510,6 @@ export function HomePage({ onNavigate }: HomePageProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
       <AlertDialog open={deleteAllUnknownDialogOpen} onOpenChange={setDeleteAllUnknownDialogOpen}>
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader>
@@ -532,5 +527,5 @@ export function HomePage({ onNavigate }: HomePageProps) {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }
