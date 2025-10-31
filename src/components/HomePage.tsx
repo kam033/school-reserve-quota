@@ -302,12 +302,11 @@ export function HomePage({ onNavigate }: HomePageProps) {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">
-              نظام إدارة الحصص الاحتياطية
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              إدارة ذكية لجداول المعلمين والحصص الاحتياطية
-            </p>
+            <h1 className="text-4xl font-bold text-foreground mb-2">نظام إدارة الحصص الاحتياطية  
+
+
+            المديرية العامة للتربية والتعليم لمحافظة مسقط</h1>
+            <p className="text-muted-foreground text-lg">إدارة ذكية لجداول المعلمين والحصص الاحتياطية  مدرسة الحباب بن المنذر 9-12</p>
           </div>
           {currentUser && (
             <div className="flex items-center gap-4">
