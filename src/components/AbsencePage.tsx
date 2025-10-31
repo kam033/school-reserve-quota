@@ -123,20 +123,29 @@ export function AbsencePage() {
   const availableSubstitutes = useMemo(() => {
     if (approvedSchedules.length === 0 || !selectedDay || selectedPeriods.length === 0) return []
     
-    const busyTeacherIds = new Set<string>()
+    const minPeriod = Math.min(...selectedPeriods)
+    const maxPeriod = Math.max(...selectedPeriods)
+    
+    const unavailableTeacherIds = new Set<string>()
     
     approvedSchedules.forEach((schedule) => {
       if (schedule.periods && Array.isArray(schedule.periods)) {
         schedule.periods.forEach((period) => {
-          if (period.day === selectedDay && selectedPeriods.includes(period.periodNumber)) {
-            busyTeacherIds.add(period.teacherId)
+          if (period.day === selectedDay) {
+            if (
+              selectedPeriods.includes(period.periodNumber) ||
+              period.periodNumber === minPeriod - 1 ||
+              period.periodNumber === maxPeriod + 1
+            ) {
+              unavailableTeacherIds.add(period.teacherId)
+            }
           }
         })
       }
     })
 
     let filteredTeachers = allTeachers.filter((teacher) => 
-      teacher.id !== selectedTeacherId && !busyTeacherIds.has(teacher.id)
+      teacher.id !== selectedTeacherId && !unavailableTeacherIds.has(teacher.id)
     )
 
     const absentTeacher = getTeacherById(selectedTeacherId)
@@ -727,7 +736,7 @@ export function AbsencePage() {
                   <Label>المعلم البديل (اختياري)</Label>
                   {selectedPeriods.length > 0 && availableSubstitutes.length > 0 && (
                     <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
-                      ✓ متفرغون فقط
+                      ✓ متفرغون تماماً
                     </Badge>
                   )}
                 </div>
@@ -809,7 +818,7 @@ export function AbsencePage() {
                         )}
                       </span>
                       <span className="text-muted-foreground text-[10px]">
-                        ✓ بدون حصص في نفس الوقت
+                        ✓ متفرغون قبل وأثناء وبعد الحصة
                       </span>
                     </div>
                   </div>
@@ -859,7 +868,7 @@ export function AbsencePage() {
                 {selectedPeriods.length > 0 && availableSubstitutes.length === 0 && selectedTeacherId && (
                   <Alert className="border-destructive/50 bg-destructive/5">
                     <AlertDescription className="text-sm text-destructive">
-                      ⚠️ جميع المعلمين مشغولون في هذه الحصص (لا يوجد معلمين متفرغين)
+                      ⚠️ جميع المعلمين مشغولون (لا يوجد معلمين متفرغين قبل أو أثناء أو بعد الحصص المختارة)
                       {filterMode !== 'all' && (
                         <div className="mt-1 text-xs">
                           💡 جرب استخدام "الجدول العام" لعرض جميع المعلمين المتفرغين
