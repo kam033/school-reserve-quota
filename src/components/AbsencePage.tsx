@@ -64,18 +64,32 @@ export function AbsencePage() {
       for (const period of schedule.periods) {
         if (period.teacherId === selectedTeacherId && 
             period.day === selectedDay && 
-            selectedPeriods.includes(period.periodNumber) &&
-            period.className) {
-          gradesFound.add(period.className)
+            selectedPeriods.includes(period.periodNumber)) {
+          
+          console.log(`Period found for teacher ${selectedTeacherId}:`, {
+            day: period.day,
+            periodNumber: period.periodNumber,
+            className: period.className,
+            subject: period.subject
+          })
+          
+          if (period.className) {
+            gradesFound.add(period.className)
+          } else {
+            console.warn(`⚠️ Period has no className (ClassID missing in XML):`, period)
+          }
         }
       }
     }
     
     if (gradesFound.size > 0) {
       const grades = Array.from(gradesFound)
-      console.log('Grades found for absent teacher:', grades)
+      console.log('✓ Grades found for absent teacher:', grades)
       return grades[0]
     }
+    
+    console.warn('⚠️ No class information found for the selected teacher in the approved schedule.')
+    console.warn('To enable the "Same Class" button, make sure your XML file includes the ClassID attribute for each lesson.')
     
     return null
   }
@@ -827,7 +841,7 @@ export function AbsencePage() {
                         onClick={() => setFilterMode('grade')}
                         className="flex-1 gap-2"
                         disabled={!getAbsentTeacherGrade()}
-                        title={!getAbsentTeacherGrade() ? 'لا يوجد صف محدد للمعلم في الحصص المختارة' : ''}
+                        title={!getAbsentTeacherGrade() ? 'يتطلب معلومات الصف (ClassID) في ملف XML للحصص المختارة' : 'عرض المعلمين الذين يدرّسون نفس الصف'}
                       >
                         <GraduationCap className="w-4 h-4" />
                         نفس الصف
@@ -835,7 +849,10 @@ export function AbsencePage() {
                     </div>
                     {!getAbsentTeacherGrade() && selectedTeacherId && selectedPeriods.length > 0 && (
                       <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-md">
-                        ℹ️ لم يتم العثور على صف محدد للمعلم في الحصص المختارة. الزر "نفس الصف" معطل.
+                        <div className="font-medium mb-1">ℹ️ لم يتم العثور على معلومات الصف للمعلم الغائب في الجدول المعتمد.</div>
+                        <div className="text-[11px] leading-relaxed">
+                          لتفعيل زر "نفس الصف"، تأكد أن ملف XML يحتوي على معرّف الصف (ClassID) في جدول الحصص (TimeTableSchedule) للحصص المختارة.
+                        </div>
                       </div>
                     )}
                     {filterMode === 'all' && (

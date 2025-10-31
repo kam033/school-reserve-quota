@@ -315,6 +315,50 @@ export function XMLGuide() {
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Badge variant="secondary">7</Badge>
+              تأكد من وجود معرّف الصف (ClassID) في جدول الحصص
+            </h3>
+            <p className="text-muted-foreground mb-3">
+              لتفعيل ميزة "نفس الصف" عند تسجيل الغيابات، يجب أن يحتوي كل سطر في جدول الحصص على معرّف الصف:
+            </p>
+            <Alert className="bg-muted mb-3">
+              <AlertDescription>
+                <code className="text-sm font-mono whitespace-pre">
+{`<TimeTableSchedule 
+  DayID="1" 
+  Period="1" 
+  ClassID="1"
+  SubjectGradeID="1"
+  TeacherID="1"/>`}
+                </code>
+              </AlertDescription>
+            </Alert>
+            <div className="space-y-3">
+              <Alert className="bg-accent/10 border-accent">
+                <CheckCircle className="h-4 w-4 text-accent" />
+                <AlertDescription>
+                  <strong>مثال صحيح:</strong> كل حصة لها ClassID يربطها بصف معين (مثل: ClassID="1" للصف التاسع/1)
+                </AlertDescription>
+              </Alert>
+              <Alert variant="destructive">
+                <XCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>مثال خاطئ:</strong> الحصة بدون ClassID أو ClassID="" (فارغ)
+                </AlertDescription>
+              </Alert>
+            </div>
+            <Alert className="mt-3">
+              <WarningCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>ملاحظة:</strong> إذا كان زر "نفس الصف" معطلاً عند تسجيل الغيابات، فهذا يعني أن ملف XML لا يحتوي على معلومات ClassID للحصص المختارة.
+              </AlertDescription>
+            </Alert>
+          </div>
+
+          <Separator />
+
+          <div>
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Badge variant="secondary">8</Badge>
               احفظ الملف بالترميز الصحيح
             </h3>
             <div className="space-y-3">
@@ -339,7 +383,7 @@ export function XMLGuide() {
 
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Badge variant="secondary">8</Badge>
+              <Badge variant="secondary">9</Badge>
               جرب رفع الملف في النظام
             </h3>
             <p className="text-muted-foreground mb-3">
@@ -376,6 +420,10 @@ export function XMLGuide() {
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">✓</Badge>
                 <span className="text-sm">النظام يقرأ الجدول كامل (تغليف الجدول)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary">✓</Badge>
+                <span className="text-sm">معرّفات الصفوف موجودة (ClassID في كل حصة)</span>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">✓</Badge>
