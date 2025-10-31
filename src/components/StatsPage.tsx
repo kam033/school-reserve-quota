@@ -1,260 +1,117 @@
-import { useMemo } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { useState, useEffect } from 'react'
+import { AuthProvider } from '@/lib/auth'
+import { Toaster } from '@/components/ui/sonner'
+import { HomePage } from '@/components/HomePage'
+import { XMLUploadPage } from '@/components/XMLUploadPage'
+import { TeacherSchedulesPage } from '@/components/TeacherSchedulesPage'
+import { AbsencePage } from '@/components/AbsencePage'
+import { StatsPage } from '@/components/StatsPage'
+import { ScheduleViewPage } from '@/components/ScheduleViewPage'
+import { SmartAnalyticsPage } from '@/components/SmartAnalyticsPage'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { House } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
-import { ScheduleData, Absence } from '@/lib/types'
-import { Users, BookOpen, Clock, CalendarX, CheckCircle, WarningCircle } from '@phosphor-icons/react'
+import { ScheduleData } from '@/lib/types'
 
-export function StatsPage() {
+// 🧭 تعريف الصفحات المتاحة
+type Page = 'home' | 'upload' | 'allSchedules' | 'absences' | 'stats' | 'view' | 'analytics'
+
+function AppContent() {
+  const [currentPage, setCurrentPage] = useState<Page>('home')
+
+  // 📦 البيانات الرئيسية لجداول المعلمين
+  const [allSchedules, setAllSchedules] = useKV<ScheduleData[]>('allSchedules', [])
+
+  // ⚠️ مفتاح قديم فقط للترحيل (اختياري)
   const [schedules] = useKV<ScheduleData[]>('schedules', [])
-  const [absences] = useKV<Absence[]>('absences', [])
 
-  const approvedSchedules = useMemo(() => {
-    if (!schedules || !Array.isArray(schedules) || schedules.length === 0) return []
-    return schedules.filter((s) => s.approved)
-  }, [schedules])
+  // ✅ تحقق من وجود جدول معتمد أو جداول
+  const hasApprovedSchedule = Array.isArray(allSchedules) && allSchedules.some(s => s.approved)
+  const hasSchedules = Array.isArray(allSchedules) && allSchedules.length > 0
 
-  const stats = useMemo(() => {
-    if (approvedSchedules.length === 0) {
-      return {
-        totalTeachers: 0,
-        totalSubjects: 0,
-        totalPeriods: 0,
-        absencesTotal: 0,
-        absencesToday: 0,
-        coverageRate: 0,
-        warnings: [],
-      }
+  // 🧾 تسجيل معلومات للتطوير
+  useEffect(() => {
+    console.log('🧭 الصفحة الحالية:', currentPage)
+    console.log('📄 عدد الجداول:', allSchedules.length)
+    console.log('✅ جدول معتمد موجود؟', hasApprovedSchedule)
+  }, [currentPage, allSchedules, hasApprovedSchedule])
+
+  // 🔁 ترحيل البيانات من schedules إلى allSchedules لمرة واحدة فقط
+  useEffect(() => {
+    if (schedules && schedules.length > 0 && (!allSchedules || allSchedules.length === 0)) {
+      console.log('🔄 يتم الآن نقل البيانات من schedules إلى allSchedules...')
+      setAllSchedules(schedules)
     }
+  }, [schedules, allSchedules, setAllSchedules])
 
-    const allTeachers = approvedSchedules.flatMap((s) => s.teachers || [])
-    const allPeriods = approvedSchedules.flatMap((s) => s.periods || [])
-    const uniqueSubjects = new Set(allTeachers.map((t) => t.subject).filter(Boolean))
-    
-    const today = new Date().toISOString().split('T')[0]
-    const todayAbsences = (absences || []).filter((a) => a.date === today)
-    const coveredAbsences = todayAbsences.filter((a) => a.substituteTeacherId)
-    
-    const coverageRate = todayAbsences.length > 0
-      ? Math.round((coveredAbsences.length / todayAbsences.length) * 100)
-      : 100
-
-    const warnings: string[] = []
-    
-    const teacherNames = new Set<string>()
-    const duplicateNames = new Set<string>()
-    allTeachers.forEach((t) => {
-      if (teacherNames.has(t.name)) {
-        duplicateNames.add(t.name)
-      }
-      teacherNames.add(t.name)
-    })
-    
-    if (duplicateNames.size > 0) {
-      warnings.push(`تكرار في أسماء المعلمين (${duplicateNames.size} اسم مكرر)`)
+  // 🖼️ عرض الصفحة حسب الاختيار
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'home': return <HomePage onNavigate={setCurrentPage} />
+      case 'upload': return <XMLUploadPage />
+      case 'allSchedules': return <TeacherSchedulesPage />
+      case 'absences': return <AbsencePage />
+      case 'stats': return <StatsPage />
+      case 'view': return <ScheduleViewPage />
+      case 'analytics': return <SmartAnalyticsPage />
+      default: return <HomePage onNavigate={setCurrentPage} />
     }
-
-    const teachersWithEncodingIssues = allTeachers.filter(
-      (t) => t.name.includes('�') || t.name.includes('?')
-    )
-    if (teachersWithEncodingIssues.length > 0) {
-      warnings.push(`مشاكل ترميز في ${teachersWithEncodingIssues.length} معلم`)
-    }
-
-    if (coverageRate < 50) {
-      warnings.push('نسبة التغطية منخفضة - أقل من 50%')
-    }
-
-    return {
-      totalTeachers: allTeachers.length,
-      totalSubjects: uniqueSubjects.size,
-      totalPeriods: allPeriods.length,
-      absencesTotal: (absences || []).length,
-      absencesToday: todayAbsences.length,
-      coverageRate,
-      warnings,
-    }
-  }, [approvedSchedules, absences])
-
-  const statCards = [
-    {
-      title: 'إجمالي المعلمين',
-      value: stats.totalTeachers,
-      icon: Users,
-      color: 'text-primary',
-      bgColor: 'bg-primary/10',
-    },
-    {
-      title: 'المواد الدراسية',
-      value: stats.totalSubjects,
-      icon: BookOpen,
-      color: 'text-secondary',
-      bgColor: 'bg-secondary/10',
-    },
-    {
-      title: 'إجمالي الحصص',
-      value: stats.totalPeriods,
-      icon: Clock,
-      color: 'text-accent',
-      bgColor: 'bg-accent/10',
-    },
-    {
-      title: 'الغيابات اليوم',
-      value: stats.absencesToday,
-      icon: CalendarX,
-      color: 'text-destructive',
-      bgColor: 'bg-destructive/10',
-    },
-    {
-      title: 'نسبة التغطية',
-      value: `${stats.coverageRate}%`,
-      icon: CheckCircle,
-      color: stats.coverageRate >= 70 ? 'text-accent' : 'text-destructive',
-      bgColor: stats.coverageRate >= 70 ? 'bg-accent/10' : 'bg-destructive/10',
-    },
-    {
-      title: 'إجمالي الغيابات',
-      value: stats.absencesTotal,
-      icon: CalendarX,
-      color: 'text-muted-foreground',
-      bgColor: 'bg-muted',
-    },
-  ]
-
-  const recentAbsences = useMemo(() => {
-    if (!absences || !Array.isArray(absences) || absences.length === 0 || approvedSchedules.length === 0) return []
-    
-    const allTeachers = approvedSchedules.flatMap((s) => s.teachers || [])
-    
-    return absences
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 10)
-      .map((absence) => ({
-        ...absence,
-        teacherName: allTeachers.find((t) => t.id === absence.teacherId)?.name || 'غير معروف',
-        substituteName: absence.substituteTeacherId
-          ? allTeachers.find((t) => t.id === absence.substituteTeacherId)?.name
-          : null,
-      }))
-  }, [absences, approvedSchedules])
+  }
 
   return (
-    <div className="min-h-screen bg-background" dir="rtl">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-2">التقرير الإحصائي</h1>
-        <p className="text-muted-foreground mb-8">
-          نظرة شاملة على البيانات والإحصاءات
-        </p>
-
-        {approvedSchedules.length === 0 ? (
-          <Card className="border-amber-500/50 bg-amber-50/50">
-            <CardContent className="py-12">
-              <div className="text-center space-y-3">
-                <p className="text-lg font-medium text-foreground">
-                  ⚠️ لا يوجد جدول معتمد
-                </p>
-                <p className="text-muted-foreground">
-                  يرجى رفع ملف XML واعتماده أولاً من صفحة "تحميل الجدول"
-                </p>
-                <div className="pt-4">
-                  <Button onClick={() => window.history.back()} variant="outline">
-                    العودة للصفحة الرئيسية
-                  </Button>
-                </div>
+    <div className="min-h-screen bg-emerald-300">
+      {/* ✅ الشريط العلوي إذا لم تكن الصفحة الرئيسية */}
+      {currentPage !== 'home' && (
+        <div className="border-b border-border bg-card">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center justify-between gap-2" dir="rtl">
+              {/* 🔙 زر الرجوع للصفحة الرئيسية */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentPage('home')}
+                  className="gap-2"
+                >
+                  <House className="w-4 h-4" />
+                  الرئيسية
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">{statCards.map((stat) => (
-            <Card key={stat.title}>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
-                    <p className="text-3xl font-bold">{stat.value}</p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-                    <stat.icon className={`w-8 h-8 ${stat.color}`} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+
+              {/* 📌 شارة حالة الجداول */}
+              <div className="flex items-center gap-2">
+                {hasSchedules ? (
+                  <Badge variant={hasApprovedSchedule ? "default" : "outline"} className="text-xs">
+                    {hasApprovedSchedule ? '✓ جدول معتمد' : '⚠ جدول غير معتمد'}
+                  </Badge>
+                ) : (
+                  <Badge variant="destructive" className="text-xs">
+                    لا يوجد جدول
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
+      )}
 
-        {stats.warnings.length > 0 && (
-          <Card className="mb-8 border-destructive/50 bg-destructive/5">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                <WarningCircle className="w-5 h-5" />
-                تحذيرات وملاحظات
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {stats.warnings.map((warning, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <WarningCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
-                    <span>{warning}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        )}
+      {/* 🖥️ عرض الصفحة المحددة */}
+      {renderPage()}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>الغيابات الأخيرة</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {recentAbsences.length > 0 ? (
-              <div className="space-y-3">
-                {recentAbsences.map((absence) => (
-                  <div
-                    key={absence.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <p className="font-medium">{absence.teacherName}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-sm text-muted-foreground">
-                          {new Date(absence.date).toLocaleDateString('ar-SA')}
-                        </span>
-                        <span className="text-sm text-muted-foreground">•</span>
-                        <div className="flex gap-1">
-                          {absence.periods.map((p) => (
-                            <Badge key={p} variant="outline" className="text-xs">
-                              حصة {p}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-left">
-                      {absence.substituteName ? (
-                        <Badge variant="default" className="bg-accent">
-                          البديل: {absence.substituteName}
-                        </Badge>
-                      ) : (
-                        <Badge variant="destructive">بدون بديل</Badge>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-muted-foreground py-8">
-                لا يوجد غيابات مسجلة
-              </p>
-            )}
-          </CardContent>
-        </Card>
-          </>
-        )}
-      </div>
+      {/* 🔔 تنبيهات */}
+      <Toaster position="top-center" dir="rtl" />
     </div>
   )
 }
+
+// 🚀 نقطة البداية للتطبيق
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  )
+}
+
+export default App
