@@ -84,12 +84,13 @@ export function AbsencePage() {
     
     if (gradesFound.size > 0) {
       const grades = Array.from(gradesFound)
-      console.log('✓ Grades found for absent teacher:', grades)
+      console.log('✓ تم العثور على معلومات الصف للمعلم الغائب:', grades)
       return grades[0]
     }
     
-    console.warn('⚠️ No class information found for the selected teacher in the approved schedule.')
-    console.warn('To enable the "Same Class" button, make sure your XML file includes the ClassID attribute for each lesson.')
+    console.warn('⚠️ لم يتم العثور على معلومات الصف (ClassID) في الحصص المختارة.')
+    console.warn('💡 لتفعيل زر "نفس الصف": تأكد أن ملف XML يحتوي على ClassID في كل حصة من TimeTableSchedule')
+    console.warn('مثال: <TimeTableSchedule DayID="1" Period="2" ClassID="5" SubjectGradeID="1" TeacherID="3" />')
     
     return null
   }
@@ -841,17 +842,22 @@ export function AbsencePage() {
                         onClick={() => setFilterMode('grade')}
                         className="flex-1 gap-2"
                         disabled={!getAbsentTeacherGrade()}
-                        title={!getAbsentTeacherGrade() ? 'يتطلب معلومات الصف (ClassID) في ملف XML للحصص المختارة' : 'عرض المعلمين الذين يدرّسون نفس الصف'}
+                        title={!getAbsentTeacherGrade() ? 'معطّل: ملف XML لا يحتوي على ClassID للحصص المختارة. راجع دليل التحضير لمعرفة كيفية إضافة ClassID' : 'عرض المعلمين الذين يدرّسون نفس الصف'}
                       >
                         <GraduationCap className="w-4 h-4" />
                         نفس الصف
                       </Button>
                     </div>
                     {!getAbsentTeacherGrade() && selectedTeacherId && selectedPeriods.length > 0 && (
-                      <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-md">
-                        <div className="font-medium mb-1">ℹ️ لم يتم العثور على معلومات الصف للمعلم الغائب في الجدول المعتمد.</div>
-                        <div className="text-[11px] leading-relaxed">
-                          لتفعيل زر "نفس الصف"، تأكد أن ملف XML يحتوي على معرّف الصف (ClassID) في جدول الحصص (TimeTableSchedule) للحصص المختارة.
+                      <div className="text-xs text-amber-800 bg-amber-50 border border-amber-300 px-3 py-2.5 rounded-md">
+                        <div className="font-semibold mb-1.5 flex items-start gap-2">
+                          <span className="text-amber-600 flex-shrink-0">ℹ️</span>
+                          <span>لم يتم العثور على معلومات الصف للحصص المختارة</span>
+                        </div>
+                        <div className="text-[11px] leading-relaxed mr-5 space-y-1">
+                          <div>• زر "نفس الصف" معطّل لأن ملف XML لا يحتوي على معرّف الصف (ClassID)</div>
+                          <div className="font-medium text-amber-900">• لتفعيل هذه الميزة: تأكد أن كل حصة في جدول TimeTableSchedule تحتوي على ClassID</div>
+                          <div className="text-[10px] text-amber-600 mt-1">مثال: {'<TimeTableSchedule DayID="1" Period="2" ClassID="5" TeacherID="3" />'}</div>
                         </div>
                       </div>
                     )}

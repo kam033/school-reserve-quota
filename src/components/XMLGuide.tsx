@@ -315,8 +315,14 @@ export function XMLGuide() {
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Badge variant="secondary">7</Badge>
-              تأكد من وجود معرّف الصف (ClassID) في جدول الحصص
+              تأكد من وجود معرّف الصف (ClassID) في جدول الحصص ⭐
             </h3>
+            <Alert className="mb-3 border-accent bg-accent/10">
+              <CheckCircle className="h-5 w-5 text-accent" />
+              <AlertDescription className="font-semibold text-base">
+                هذا أهم حقل لتفعيل ميزة "نفس الصف" عند البحث عن معلم بديل!
+              </AlertDescription>
+            </Alert>
             <p className="text-muted-foreground mb-3">
               لتفعيل ميزة "نفس الصف" عند تسجيل الغيابات، يجب أن يحتوي كل سطر في جدول الحصص على معرّف الصف:
             </p>
@@ -336,20 +342,40 @@ export function XMLGuide() {
               <Alert className="bg-accent/10 border-accent">
                 <CheckCircle className="h-4 w-4 text-accent" />
                 <AlertDescription>
-                  <strong>مثال صحيح:</strong> كل حصة لها ClassID يربطها بصف معين (مثل: ClassID="1" للصف التاسع/1)
+                  <strong>✅ مثال صحيح:</strong> كل حصة لها ClassID يربطها بصف معين (مثل: ClassID="1" للصف التاسع/1)
                 </AlertDescription>
               </Alert>
               <Alert variant="destructive">
                 <XCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>مثال خاطئ:</strong> الحصة بدون ClassID أو ClassID="" (فارغ)
+                  <strong>❌ مثال خاطئ:</strong> الحصة بدون ClassID أو ClassID="" (فارغ) - سيؤدي هذا لتعطيل زر "نفس الصف"
                 </AlertDescription>
               </Alert>
             </div>
-            <Alert className="mt-3">
-              <WarningCircle className="h-4 w-4" />
+            <Alert className="mt-3 border-amber-500 bg-amber-50">
+              <WarningCircle className="h-4 w-4 text-amber-600" />
               <AlertDescription>
-                <strong>ملاحظة:</strong> إذا كان زر "نفس الصف" معطلاً عند تسجيل الغيابات، فهذا يعني أن ملف XML لا يحتوي على معلومات ClassID للحصص المختارة.
+                <div className="space-y-2">
+                  <div><strong>ماذا يحدث إذا كان ClassID مفقوداً؟</strong></div>
+                  <div className="text-sm space-y-1 mr-3">
+                    <div>• زر "نفس الصف" سيكون معطلاً (غير قابل للنقر) في صفحة الغيابات</div>
+                    <div>• ستظهر رسالة تحذيرية: "لم يتم العثور على معلومات الصف"</div>
+                    <div>• ستتمكن فقط من استخدام "الجدول العام" أو "نفس المادة" للبحث عن بديل</div>
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+            <Alert className="mt-3 border-primary bg-primary/5">
+              <AlertDescription>
+                <div className="space-y-2">
+                  <div className="font-semibold">💡 كيف أتأكد أن ClassID موجود في ملفي؟</div>
+                  <div className="text-sm space-y-1 mr-3">
+                    <div>1. افتح ملف XML في محرر نصوص (VS Code أو Notepad++)</div>
+                    <div>2. ابحث عن {'<TimeTableSchedule'}</div>
+                    <div>3. تأكد أن كل سطر يحتوي على ClassID مع قيمة (ClassID="1" أو ClassID="5" إلخ)</div>
+                    <div>4. إذا كان ClassID="" أو غير موجود، راجع إعدادات التصدير في برنامج aSc Timetables</div>
+                  </div>
+                </div>
               </AlertDescription>
             </Alert>
           </div>
