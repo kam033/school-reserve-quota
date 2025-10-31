@@ -52,7 +52,7 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-emerald-300">
       {currentPage !== 'home' && (
         <div className="border-b border-border bg-card">
           <div className="container mx-auto px-4 py-3">
@@ -87,7 +87,7 @@ function AppContent() {
       {renderPage()}
       <Toaster position="top-center" dir="rtl" />
     </div>
-  )
+  );
 }
 
 function App() {

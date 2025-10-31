@@ -305,8 +305,11 @@ export function HomePage({ onNavigate }: HomePageProps) {
             <h1 className="text-4xl font-bold text-foreground mb-2">نظام إدارة الحصص الاحتياطية  
 
 
-            المديرية العامة للتربية والتعليم لمحافظة مسقط</h1>
-            <p className="text-muted-foreground text-lg">إدارة ذكية لجداول المعلمين والحصص الاحتياطية  مدرسة الحباب بن المنذر 9-12</p>
+             المديرية العامة للتربية والتعليم لمحافظة مسقط
+
+
+             مدرسة الحباب بن المنذر 9-12</h1>
+            <p className="text-muted-foreground text-lg">إدارة ذكية لجداول المعلمين والحصص الاحتياطية  </p>
           </div>
           {currentUser && (
             <div className="flex items-center gap-4">
@@ -354,9 +357,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
         {!currentUser && (
           <Card className="mt-8 bg-accent/10 border-accent">
             <CardContent className="pt-6">
-              <p className="text-center text-lg">
-                مرحباً بك في نظام إدارة الحصص الاحتياطية. يرجى تسجيل الدخول للمتابعة.
-              </p>
+              <p className="text-center text-lg bg-slate-400">مرحباً بك في نظام إدارة الحصص الاحتياطية.  يرجى تصديره من برنامج aSc Timetables بصيغة Oman XML.</p>
               <p className="text-center text-sm text-muted-foreground mt-2">بيانات الدخول التجريبية: admin / admin123</p>
             </CardContent>
           </Card>
