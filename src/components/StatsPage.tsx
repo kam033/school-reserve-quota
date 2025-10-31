@@ -137,7 +137,7 @@ export function StatsPage() {
           ? allTeachers.find((t) => t.id === absence.substituteTeacherId)?.name
           : null,
       }))
-  }, [absences, schedules])
+  }, [absences, approvedSchedules])
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">

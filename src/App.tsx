@@ -33,7 +33,7 @@ function AppContent() {
   // 🧾 تسجيل معلومات للتطوير
   useEffect(() => {
     console.log('🧭 الصفحة الحالية:', currentPage)
-    console.log('📄 عدد الجداول:', allSchedules.length)
+    console.log('📄 عدد الجداول:', allSchedules?.length || 0)
     console.log('✅ جدول معتمد موجود؟', hasApprovedSchedule)
   }, [currentPage, allSchedules, hasApprovedSchedule])
 
