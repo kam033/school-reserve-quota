@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode } from 'react'
+import { createContext, useContext, ReactNode, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { User, UserRole } from './types'
 
@@ -13,17 +13,25 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+const DEFAULT_USERS: User[] = [
+  {
+    id: 'admin-1',
+    username: 'admin',
+    password: 'admin123',
+    role: 'admin' as UserRole,
+    name: 'مدير النظام',
+  },
+]
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useKV<User | null>('current-user', null)
-  const [users] = useKV<User[]>('users', [
-    {
-      id: 'admin-1',
-      username: 'admin',
-      password: 'admin123',
-      role: 'admin' as UserRole,
-      name: 'مدير النظام',
-    },
-  ])
+  const [users, setUsers] = useKV<User[]>('users', [])
+
+  useEffect(() => {
+    if (!users || users.length === 0) {
+      setUsers(DEFAULT_USERS)
+    }
+  }, [])
 
   const login = (username: string, password: string): boolean => {
     const userList = users || []

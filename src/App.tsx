@@ -14,7 +14,7 @@ import { House } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { ScheduleData } from '@/lib/types'
 
-type Page = 'home' | 'upload' | 'schedules' | 'absences' | 'stats' | 'view' | 'analytics'
+type Page = 'home' | 'upload' | 'allSchedules' | 'absences' | 'stats' | 'view' | 'analytics'
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('home')
@@ -36,7 +36,7 @@ function AppContent() {
         return <HomePage onNavigate={setCurrentPage} />
       case 'upload':
         return <XMLUploadPage />
-      case 'schedules':
+      case 'allSchedules':
         return <TeacherSchedulesPage />
       case 'absences':
         return <AbsencePage />
