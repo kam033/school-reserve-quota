@@ -69,18 +69,14 @@ export function parseXMLFile(xmlContent: string, schoolId: string): ParseResult 
       })
     })
 
+    const periodTimings = new Map<number, { startTime: string; endTime: string }>()
     const periodElements = xmlDoc.querySelectorAll('period')
     periodElements.forEach((periodEl) => {
       const period = periodEl.getAttribute('period') || '0'
       const starttime = periodEl.getAttribute('starttime') || ''
       const endtime = periodEl.getAttribute('endtime') || ''
 
-      periods.push({
-        id: `${schoolId}-period-${period}`,
-        day: '',
-        periodNumber: parseInt(period) || 0,
-        teacherId: '',
-        subject: '',
+      periodTimings.set(parseInt(period) || 0, {
         startTime: starttime,
         endTime: endtime,
       })
@@ -223,6 +219,22 @@ export function parseXMLFile(xmlContent: string, schoolId: string): ParseResult 
         classID,
         optionalClassID,
         teacherID,
+      })
+
+      const day = days.find((d) => d.day === dayID)
+      const subject = subjects.find((s) => s.originalId === subjectGradeID)
+      const classObj = classes.find((c) => c.originalId === classID)
+      const timing = periodTimings.get(parseInt(period) || 0)
+
+      periods.push({
+        id: `${schoolId}-period-${index}`,
+        day: day?.name || '',
+        periodNumber: parseInt(period) || 0,
+        teacherId: `${schoolId}-${teacherID}`,
+        subject: subject?.name || '',
+        className: classObj?.name || '',
+        startTime: timing?.startTime || '',
+        endTime: timing?.endTime || '',
       })
     })
 

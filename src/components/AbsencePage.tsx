@@ -56,17 +56,27 @@ export function AbsencePage() {
   function getAbsentTeacherGrade(): string | null {
     if (!selectedTeacherId || approvedSchedules.length === 0 || selectedPeriods.length === 0) return null
     
+    const gradesFound = new Set<string>()
+    
     for (const schedule of approvedSchedules) {
       if (!schedule.periods || !Array.isArray(schedule.periods)) continue
       
       for (const period of schedule.periods) {
         if (period.teacherId === selectedTeacherId && 
             period.day === selectedDay && 
-            selectedPeriods.includes(period.periodNumber)) {
-          return period.className || null
+            selectedPeriods.includes(period.periodNumber) &&
+            period.className) {
+          gradesFound.add(period.className)
         }
       }
     }
+    
+    if (gradesFound.size > 0) {
+      const grades = Array.from(gradesFound)
+      console.log('Grades found for absent teacher:', grades)
+      return grades[0]
+    }
+    
     return null
   }
 
@@ -817,11 +827,17 @@ export function AbsencePage() {
                         onClick={() => setFilterMode('grade')}
                         className="flex-1 gap-2"
                         disabled={!getAbsentTeacherGrade()}
+                        title={!getAbsentTeacherGrade() ? 'لا يوجد صف محدد للمعلم في الحصص المختارة' : ''}
                       >
                         <GraduationCap className="w-4 h-4" />
                         نفس الصف
                       </Button>
                     </div>
+                    {!getAbsentTeacherGrade() && selectedTeacherId && selectedPeriods.length > 0 && (
+                      <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-md">
+                        ℹ️ لم يتم العثور على صف محدد للمعلم في الحصص المختارة. الزر "نفس الصف" معطل.
+                      </div>
+                    )}
                     {filterMode === 'all' && (
                       <div className="text-xs text-muted-foreground bg-blue-50 border border-blue-200 px-3 py-2 rounded-md">
                         📋 عرض جميع المعلمين المتاحين (المتفرغين) في الجدول العام
@@ -834,7 +850,10 @@ export function AbsencePage() {
                     )}
                     {filterMode === 'grade' && getAbsentTeacherGrade() && (
                       <div className="text-xs text-muted-foreground bg-purple-50 border border-purple-200 px-3 py-2 rounded-md">
-                        🏫 عرض المعلمين المتفرغين في نفس الصف: <span className="font-medium text-foreground">{getAbsentTeacherGrade()}</span>
+                        🏫 عرض المعلمين المتفرغين الذين يدرّسون نفس الصف: <span className="font-medium text-foreground">{getAbsentTeacherGrade()}</span>
+                        <div className="mt-1 text-[10px]">
+                          📌 المعلمون المعروضون يدرّسون هذا الصف (أي مادة) ومتفرغون في الوقت المطلوب
+                        </div>
                       </div>
                     )}
                     <div className="flex items-center justify-between text-xs px-1">
